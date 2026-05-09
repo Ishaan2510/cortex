@@ -24,7 +24,7 @@ services:
     build: ./backend
     container_name: atp_backend
     restart: unless-stopped
-    env_file: ./backend/.env
+    env_file: ./backend/.env.docker
     ports:
       - "5000:5000"
     depends_on:
@@ -35,7 +35,7 @@ services:
     build: ./worker
     container_name: atp_worker
     restart: unless-stopped
-    env_file: ./worker/.env
+    env_file: ./worker/.env.docker
     depends_on:
       - mongodb
       - redis
