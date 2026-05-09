@@ -2,7 +2,7 @@
 
 A production-grade task processing platform built with the MERN stack, a Python worker service, Redis queue, Docker, and Kubernetes. Users submit text processing tasks through a React frontend. Each task is queued in Redis and processed asynchronously by a Python worker that updates task status in real time.
 
-![Dashboard](docs/images/dashboard.png)
+![Dashboard]([docs/images/dashboard.png](https://github.com/Ishaan2510/ai-task-platform/blob/main/docs/dashboard.png))
 
 ## Tech Stack
 
