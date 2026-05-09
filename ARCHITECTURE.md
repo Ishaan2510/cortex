@@ -1,40 +1,51 @@
+<div align="center">
+
 # AI Task Platform — Architecture Document
+
+</div>
+
+---
 
 ## System Overview
 
-AI Task Platform is a distributed task processing system built on the MERN stack with a Python worker service. Users submit text processing tasks through a React frontend. The backend queues each task into Redis, and one or more Python workers consume from the queue asynchronously, updating task status in MongoDB as they progress from pending to running to success or failed.
+AI Task Platform is a distributed task processing system built on the MERN stack with a Python worker service. Users submit text processing tasks through a React frontend. The backend queues each task into Redis, and one or more Python workers consume from the queue asynchronously, updating task status in MongoDB as they progress from `pending` to `running` to `success` or `failed`.
 
-![Dashboard](docs/images/dashboard.png)
+![Dashboard](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/dashboard.png)
 
 ---
 
 ## Component Architecture
-┌─────────────────────────────────────────────────────────┐
-│                    React Frontend                        │
-│              (Nginx, Docker, Kubernetes)                 │
-│         Login / Register / Dashboard / Task Modal        │
-└─────────────────────────┬───────────────────────────────┘
-│  REST API over HTTP
-▼
-┌─────────────────────────────────────────────────────────┐
-│                  Node.js + Express API                   │
-│              (Docker, Kubernetes, 1 replica)             │
-│    JWT Auth / Task CRUD / Redis Queue Dispatch           │
-└────────────────┬────────────────────┬───────────────────┘
-│                    │
-┌────────────▼──────┐   ┌─────────▼──────────────────┐
-│     MongoDB        │   │          Redis              │
-│  (tasks, users)    │   │  (task_queue list)          │
-│  Kubernetes PVC    │   │  Kubernetes deployment      │
-└────────────▲──────┘   └─────────┬──────────────────┘
-│                    │
-┌────────────────┴────────────────────▼───────────────────┐
-│              Python Worker Service                       │
-│          (Docker, Kubernetes, 2 replicas)                │
-│   brpop from Redis → process → update MongoDB            │
-└─────────────────────────────────────────────────────────┘
 
-![Task Detail with Logs](docs/images/task-detail.png)
+```
+ +---------------------------------------------------------+
+ |                   React Frontend                        |
+ |           (Nginx, Docker, Kubernetes)                   |
+ |      Login / Register / Dashboard / Task Modal          |
+ +-------------------------+-------------------------------+
+                           |
+                    REST API over HTTP
+                           |
+                           v
+ +---------------------------------------------------------+
+ |              Node.js + Express API                      |
+ |           (Docker, Kubernetes, 1 replica)               |
+ |   JWT Auth  /  Task CRUD  /  Redis Queue Dispatch       |
+ +------------------+-----------------------+--------------+
+                    |                       |
+         +----------v----------+  +---------v-----------+
+         |      MongoDB        |  |        Redis         |
+         |  (tasks, users)     |  |   (task_queue list)  |
+         |  Kubernetes PVC     |  |  Kubernetes Service  |
+         +----------^----------+  +---------+-----------+
+                    |                       |
+ +---------------------------------------------------------+
+ |              Python Worker Service                      |
+ |          (Docker, Kubernetes, 2 replicas)               |
+ |   brpop from Redis  →  process  →  update MongoDB      |
+ +---------------------------------------------------------+
+```
+
+![Task Detail with Logs](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/task-detail.png)
 
 ---
 
@@ -59,11 +70,11 @@ At 100,000 tasks per day, the system processes approximately 1.16 tasks per seco
 
 **Queue throughput.** Redis can handle hundreds of thousands of operations per second on commodity hardware. The `task_queue` list never becomes the bottleneck at this scale. Each `lPush` from the backend and each `brpop` from a worker is an O(1) operation.
 
-**Worker throughput.** Each worker processes one task at a time sequentially. A single worker can complete approximately 200 to 500 simple string operations per second given the overhead of two MongoDB writes per task (one for running, one for success or failed). At 2 replicas, the fleet handles 400 to 1,000 tasks per second, well above the 1.16 per second daily average and sufficient for realistic peak bursts.
+**Worker throughput.** Each worker processes one task at a time sequentially. A single worker can complete approximately 200 to 500 simple string operations per second given the overhead of two MongoDB writes per task — one for `running`, one for `success` or `failed`. At 2 replicas, the fleet handles 400 to 1,000 tasks per second, well above the 1.16 per second daily average and sufficient for realistic peak bursts.
 
 **Database throughput.** MongoDB handles the write volume comfortably. Each task lifecycle generates 3 MongoDB operations: one insert on creation and two updates during processing. At 100,000 tasks per day, that is 300,000 operations per day or roughly 3.5 operations per second on average. MongoDB on modest hardware handles tens of thousands of operations per second.
 
-**Scaling path for higher load.** If task volume increases by 10x or 100x, the following changes apply in order: increase worker replicas, add a read replica for MongoDB task listing queries, shard the tasks collection by userId, and introduce a Redis Cluster for queue throughput above 100,000 operations per second.
+**Scaling path for higher load.** If task volume increases by 10x or 100x, the following changes apply in order: increase worker replicas, add a read replica for MongoDB task listing queries, shard the tasks collection by `userId`, and introduce a Redis Cluster for queue throughput above 100,000 operations per second.
 
 ---
 
@@ -86,9 +97,9 @@ This index is the most critical one in the system. The most frequent query patte
 Task.find({ userId: req.user.id }).sort({ createdAt: -1 })
 ```
 
-Without the index, this query performs a full collection scan across all tasks from all users. With the index, MongoDB narrows the scan to only documents matching the userId, making the query O(log n) in the index lookup phase.
+Without the index, this query performs a full collection scan across all tasks from all users. With the index, MongoDB narrows the scan to only documents matching the `userId`, making the query O(log n) in the index lookup phase.
 
-**Secondary indexes to add at scale.** As the tasks collection grows, a compound index on `{ userId: 1, createdAt: -1 }` would allow MongoDB to satisfy the sort within the index itself without a separate sort step, reducing memory usage and query time further. A partial index on `{ status: 1 }` filtered to `pending` and `running` documents would accelerate any admin or monitoring queries that check for stuck tasks.
+**Secondary indexes to add at scale.** As the tasks collection grows, a compound index on `{ userId: 1, createdAt: -1 }` would allow MongoDB to satisfy the sort within the index itself without a separate sort step, reducing memory usage and query time further. A partial index on `{ status: 1 }` filtered to `pending` and `running` documents would accelerate admin or monitoring queries that check for stuck tasks.
 
 **The users collection** has an implicit unique index on `email` enforced by the `unique: true` field option in the Mongoose schema, which MongoDB converts to a unique index automatically.
 
@@ -102,10 +113,9 @@ Redis is the queue layer between the backend and the worker. A Redis failure aff
 
 **Impact on the worker.** Workers call `brpop` in a loop with exception handling. If the Redis connection drops, the exception is caught, logged, and the worker sleeps for 2 seconds before retrying. Workers do not crash on Redis failure.
 
-**Recovery path.** When Redis comes back online, workers reconnect automatically via the redis-py client's built-in retry logic. Tasks that were pushed to the queue before the failure are still in Redis (Redis persists the list in memory and optionally on disk via AOF or RDB snapshots). Tasks that failed to enqueue during the outage have their IDs in MongoDB and can be re-queued by a recovery script:
+**Recovery path.** When Redis comes back online, workers reconnect automatically. Tasks that were pushed to the queue before the failure are still in Redis since Redis persists the list in memory. Tasks that failed to enqueue during the outage have their IDs in MongoDB and can be re-queued by a recovery script:
 
 ```python
-# Recovery script concept
 pending_tasks = db.tasks.find({"status": "pending"})
 for task in pending_tasks:
     redis_client.lpush("task_queue", str(task["_id"]))
@@ -117,7 +127,7 @@ for task in pending_tasks:
 
 ## Staging and Production Environments
 
-The GitOps model with Argo CD makes multi-environment deployment straightforward. Each environment is a separate Argo CD Application pointing to a different path or branch in the infra repository.
+The GitOps model with Argo CD makes multi-environment deployment straightforward. Each environment is a separate Argo CD Application pointing to a different path in the infra repository.
 
 **Staging environment setup.** Create a `k8s-staging/` directory in the infra repository mirroring the structure of `k8s/` but with different values: fewer worker replicas (1 instead of 2), smaller resource limits, and environment-specific ConfigMaps pointing to a staging MongoDB and Redis instance. A staging Argo CD Application is configured to watch `k8s-staging/`:
 
@@ -128,29 +138,29 @@ source:
 
 **Production environment setup.** The existing `k8s/` directory serves production. The production Argo CD Application watches the `main` branch of the infra repo. The CI/CD pipeline updates image tags in `k8s/` deployments on every push to the application repo's `main` branch.
 
-**Promotion flow.** A developer merges a feature branch into a `staging` branch of the app repo. A separate GitHub Actions workflow builds images tagged with the staging commit SHA and updates `k8s-staging/` in the infra repo. After validation, the change is merged to `main`, which triggers the production pipeline updating `k8s/`.
+**Promotion flow.** A developer merges a feature branch into a `staging` branch of the app repo. A separate GitHub Actions workflow builds images tagged with the staging commit SHA and updates `k8s-staging/` in the infra repo. After validation on staging, the change is merged to `main`, which triggers the production pipeline updating `k8s/`.
 
-**Environment separation in practice.** The only differences between staging and production manifests are the image tags, replica counts, resource limits, and ConfigMap values (MongoDB URI, Redis URL, JWT secret). All structural Kubernetes manifests (Deployments, Services, Ingress, probes) are identical, ensuring staging accurately reflects what production will run.
+**Environment separation in practice.** The only differences between staging and production manifests are the image tags, replica counts, resource limits, and ConfigMap values such as MongoDB URI, Redis URL, and JWT secret. All structural Kubernetes manifests including Deployments, Services, Ingress, and probes are identical, ensuring staging accurately reflects what production will run.
 
 ---
 
 ## CI/CD Pipeline
 
-![GitHub Actions Pipeline](docs/images/pipeline.png)
+![GitHub Actions Pipeline](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/pipeline.png)
 
-The pipeline has three stages that run sequentially on every push to `main`:
+The pipeline has three stages that run sequentially on every push to `main`.
 
-**Lint.** ESLint runs on the backend and frontend source code. Failures block the subsequent stages.
+**Lint.** ESLint runs on the backend and frontend source code. Failures block all subsequent stages.
 
 **Build and Push.** Docker images are built for all three services using multi-stage Dockerfiles. Images are tagged with both `latest` and the short Git commit SHA (7 characters). Both tags are pushed to Docker Hub under the `ishaan102` namespace.
 
-**Update Infra Repo.** The pipeline checks out the `ai-task-platform-infra` repository using a GitHub Personal Access Token stored as a secret. It runs `sed` to replace the image tag in each deployment manifest with the new commit SHA tag, commits the change, and pushes. Argo CD detects the change within 3 minutes and applies it to the cluster automatically.
+**Update Infra Repo.** The pipeline checks out the `ai-task-platform-infra` repository using a GitHub Personal Access Token stored as a secret. It runs `sed` to replace the image tag in each deployment manifest with the new commit SHA tag, commits the change, and pushes. Argo CD detects the change within minutes and applies it to the cluster automatically.
 
 ---
 
 ## GitOps with Argo CD
 
-![Argo CD Dashboard](docs/images/argocd.png)
+![Argo CD Dashboard](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/argocd.png)
 
 Argo CD runs in the `argocd` namespace of the same Kubernetes cluster. It is configured with auto-sync enabled, meaning any change pushed to the `k8s/` directory in the infra repository is automatically applied to the cluster without manual intervention.
 
@@ -160,6 +170,8 @@ The Application manifest sets `prune: true` so resources removed from the manife
 
 ## Security
 
-Passwords are hashed using bcrypt with a cost factor of 12 before storage. JWTs are signed with HS256 using a secret stored as a Kubernetes Secret (base64 encoded in the manifest, injected as an environment variable). All API routes except `/api/auth/register`, `/api/auth/login`, and `/health` require a valid JWT in the Authorization header.
+Passwords are hashed using bcrypt with a cost factor of 12 before storage. JWTs are signed with HS256 using a secret stored as a Kubernetes Secret injected as an environment variable at runtime. All API routes except `/api/auth/register`, `/api/auth/login`, and `/health` require a valid JWT in the `Authorization` header.
 
-Rate limiting is applied to the auth endpoints: 10 requests per 15 minute window per IP, enforced by `express-rate-limit`. The Helmet middleware sets secure HTTP headers on all responses. No secrets or credentials are committed to either repository. All sensitive values flow through Kubernetes Secrets or GitHub Actions secrets.
+Rate limiting is applied to the auth endpoints: 10 requests per 15-minute window per IP, enforced by `express-rate-limit`. The Helmet middleware sets secure HTTP headers on all responses. No secrets or credentials are committed to either repository. All sensitive values flow through Kubernetes Secrets or GitHub Actions secrets at runtime.
+
+Docker images are built with non-root users in both the backend and worker containers, reducing the blast radius of any container escape. Multi-stage builds ensure that development dependencies, build tools, and source files that are not needed at runtime are excluded from the final image layer.
