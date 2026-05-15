@@ -1,1 +1,213 @@
 @import "tailwindcss";
+
+:root {
+  --bg:          #0f0e0c;
+  --surface:     #161412;
+  --surface-2:   #1e1c19;
+  --surface-3:   #252320;
+  --surface-hover: rgba(255,255,255,0.042);
+
+  --border:        rgba(255,255,255,0.065);
+  --border-bright: rgba(255,255,255,0.13);
+  --divider:       rgba(255,255,255,0.05);
+
+  --text:    #e6e1d8;
+  --text-2:  #7a7570;
+  --text-3:  #3f3d3a;
+  --text-inv: #1a1816;
+
+  --accent:      #7c5cf6;
+  --accent-2:    #6548d4;
+  --accent-soft: rgba(124,92,246,0.10);
+  --accent-ring: rgba(124,92,246,0.22);
+
+  --success:      #4ade80;
+  --success-soft: rgba(74,222,128,0.09);
+  --success-ring: rgba(74,222,128,0.20);
+
+  --warning:      #fbbf24;
+  --warning-soft: rgba(251,191,36,0.09);
+  --warning-ring: rgba(251,191,36,0.20);
+
+  --error:        #f87171;
+  --error-soft:   rgba(248,113,113,0.09);
+  --error-ring:   rgba(248,113,113,0.18);
+
+  --info:      #60a5fa;
+  --info-soft: rgba(96,165,250,0.09);
+
+  --amber:      #d4a76a;
+  --amber-soft: rgba(212,167,106,0.09);
+
+  --teal:      #2dd4bf;
+  --teal-soft: rgba(45,212,191,0.09);
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.09); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+
+/* Card */
+.cx-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* Input */
+.cx-input {
+  display: block;
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+}
+.cx-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+.cx-input::placeholder { color: var(--text-3); }
+.cx-input option { background: var(--surface-2); color: var(--text); }
+
+/* Primary button */
+.cx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+.cx-btn:hover:not(:disabled) { background: var(--accent-2); transform: translateY(-1px); }
+.cx-btn:active:not(:disabled) { transform: translateY(0); }
+.cx-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+
+/* Ghost button */
+.cx-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.cx-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border-bright); background: var(--surface-hover); }
+.cx-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Label */
+.cx-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Status pill */
+.cx-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Toggle */
+.cx-toggle {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.cx-toggle-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cx-toggle-btn.active { background: var(--surface-3); color: var(--text); }
+.cx-toggle-btn:not(.active) { background: transparent; color: var(--text-2); }
+
+/* Animations */
+@keyframes cx-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cx-in    { animation: cx-in 0.25s ease forwards; }
+.cx-in-d1 { animation: cx-in 0.25s 0.04s ease forwards; opacity: 0; }
+.cx-in-d2 { animation: cx-in 0.25s 0.08s ease forwards; opacity: 0; }
+.cx-in-d3 { animation: cx-in 0.25s 0.12s ease forwards; opacity: 0; }
+
+@keyframes cx-blink { 0%,100% { opacity:1; } 50% { opacity: 0.2; } }
+.cx-blink { animation: cx-blink 1.3s ease-in-out infinite; }
+
+@keyframes cx-spin { to { transform: rotate(360deg); } }
+.cx-spin { animation: cx-spin 0.75s linear infinite; }
+
+/* Inline result markdown target classes */
+.cx-prose { font-family: var(--font-body); font-size: 14px; line-height: 1.72; color: var(--text); }
+.cx-prose p { margin: 0 0 7px; }
+.cx-prose p:last-child { margin-bottom: 0; }
+.cx-prose strong { font-weight: 600; }
+.cx-prose ul { list-style: none; padding: 0; margin: 0 0 7px; display: flex; flex-direction: column; gap: 4px; }
+.cx-prose li { display: flex; align-items: flex-start; gap: 9px; }
+.cx-prose li::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 9px; }
+.cx-prose h1 { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin: 14px 0 5px; }
+.cx-prose h2 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 12px 0 4px; }
+.cx-prose h3 { font-size: 14px; font-weight: 600; margin: 10px 0 4px; }

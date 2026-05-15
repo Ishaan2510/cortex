@@ -2,82 +2,93 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/useAuth';
+import { Logo, Field, ErrorBox, Spinner } from './Login';
 
 export default function Register() {
-  const [email, setEmail] = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setError(''); setLoading(true);
     try {
-      const { data } = await api.post('/api/auth/register', { email, password });
+      const { data } = await api.post('/api/auth/register', { name, email, password });
       login(data.token, data.user);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.message || 'Registration failed. Try again.');
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-gray-900 rounded-2xl p-8 shadow-xl">
-        <h1 className="text-2xl font-bold text-white mb-2">Create account</h1>
-        <p className="text-gray-400 text-sm mb-6">AI Task Platform</p>
+    <div style={S.page}>
+      <div style={S.glow1} />
+      <div style={S.glow2} />
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="Min. 6 characters"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg text-sm transition-colors"
-          >
-            {loading ? 'Creating account...' : 'Register'}
+      <div className="cx-card cx-in" style={S.card}>
+        <Logo />
+        <h1 style={S.heading}>Create account</h1>
+        <p style={S.sub}>Your AI workspace awaits</p>
+        {error && <ErrorBox msg={error} />}
+        <form onSubmit={handleSubmit} style={S.form}>
+          <Field label="Name">
+            <input className="cx-input" type="text" value={name}
+              onChange={e => setName(e.target.value)}
+              autoComplete="name" placeholder="Your name" />
+          </Field>
+          <Field label="Email">
+            <input className="cx-input" type="email" value={email}
+              onChange={e => setEmail(e.target.value)}
+              required autoComplete="email" placeholder="you@example.com" />
+          </Field>
+          <Field label="Password">
+            <input className="cx-input" type="password" value={password}
+              onChange={e => setPassword(e.target.value)}
+              required minLength={6} autoComplete="new-password" placeholder="Min. 6 characters" />
+          </Field>
+          <button type="submit" disabled={loading} className="cx-btn" style={S.submit}>
+            {loading ? <Spinner label="Creating account…" /> : 'Get started'}
           </button>
         </form>
-
-        <p className="text-gray-500 text-sm mt-6 text-center">
+        <p style={S.footer}>
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-400 hover:underline">
-            Log in
+          <Link to="/login" style={S.link}
+            onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+            onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+            Sign in
           </Link>
         </p>
       </div>
     </div>
   );
 }
+
+const S = {
+  page: {
+    minHeight:'100vh', background:'var(--bg)',
+    display:'flex', alignItems:'center', justifyContent:'center',
+    padding:20, fontFamily:'var(--font-body)', position:'relative', overflow:'hidden',
+  },
+  glow1: {
+    position:'fixed', top:-100, right:-80, width:460, height:460,
+    background:'radial-gradient(ellipse, rgba(124,92,246,0.07) 0%, transparent 70%)',
+    pointerEvents:'none',
+  },
+  glow2: {
+    position:'fixed', bottom:-90, left:-80, width:360, height:360,
+    background:'radial-gradient(ellipse, rgba(45,212,191,0.04) 0%, transparent 70%)',
+    pointerEvents:'none',
+  },
+  card:   { width:'100%', maxWidth:396, padding:34 },
+  heading:{ fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, color:'var(--text)', margin:'0 0 5px' },
+  sub:    { fontSize:14, color:'var(--text-2)', margin:'0 0 22px' },
+  form:   { display:'flex', flexDirection:'column', gap:14 },
+  submit: { width:'100%', padding:11, marginTop:2 },
+  footer: { fontSize:13, color:'var(--text-2)', marginTop:22, textAlign:'center', margin:'22px 0 0' },
+  link:   { color:'var(--accent)', fontWeight:500, textDecoration:'none' },
+};
