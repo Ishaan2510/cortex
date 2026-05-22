@@ -20,7 +20,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
-const { connectRedis } = require('./config/redis');
+const { sweepStuckTasks } = require('./services/taskProcessor');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
 
@@ -62,6 +62,7 @@ app.use((_, res) => res.status(404).json({ message: 'Route not found' }));
 
 const PORT = process.env.PORT || 5000;
 
-Promise.all([connectDB(), connectRedis()]).then(() => {
+connectDB().then(async () => {
+  await sweepStuckTasks();
   app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
 });

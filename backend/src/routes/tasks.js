@@ -1,7 +1,7 @@
 const express = require('express');
 const Task = require('../models/Task');
 const { PRESET_OPERATIONS } = require('../models/Task');
-const { client: redisClient } = require('../config/redis');
+const { processTask } = require('../services/taskProcessor');
 const { protect } = require('../middleware/auth');
 const upload = require('../config/upload');
 
@@ -63,7 +63,9 @@ router.post('/', upload.single('file'), async (req, res) => {
       filePublicId,
     });
 
-    await redisClient.lPush('task_queue', task._id.toString());
+    processTask(task._id.toString()).catch(err => {
+      console.error('processTask crashed:', err);
+    });
 
     res.status(201).json(task);
   } catch (err) {
