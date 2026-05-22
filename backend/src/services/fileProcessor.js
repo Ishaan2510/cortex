@@ -1,4 +1,4 @@
-const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse').default || require('pdf-parse/lib/pdf-parse');
 
 const MAX_PDF_CHARS = 80_000;
 
