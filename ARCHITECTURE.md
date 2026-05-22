@@ -1,6 +1,6 @@
 <div align="center">
 
-# AI Task Platform — Architecture Document
+# Cortex — Architecture Document
 
 </div>
 
@@ -8,100 +8,149 @@
 
 ## System Overview
 
-AI Task Platform is a distributed task processing system built on the MERN stack with a Python worker service. Users submit text processing tasks through a React frontend. The backend queues each task into Redis, and one or more Python workers consume from the queue asynchronously, updating task status in MongoDB as they progress from `pending` to `running` to `success` or `failed`.
+Cortex is a multi-user AI workspace built as a distributed task processing system on the MERN stack with a Python worker service. Users submit text, PDFs, or images through a React frontend and select one of ten preset operations or supply a custom system prompt. The backend persists the task in MongoDB and pushes its ID onto a Redis queue. A Python worker consumes from the queue asynchronously, downloads and extracts any attached file, builds the appropriate system prompt, routes the request through one of four LLM providers using task-aware logic, and writes the result back along with the full provider chain attempted.
 
-![Dashboard](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/dashboard.png)
+![Dashboard](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/dashboard.png)
 
 ---
 
 ## Component Architecture
 
 ```
- +---------------------------------------------------------+
- |                   React Frontend                        |
- |           (Nginx, Docker, Kubernetes)                   |
- |      Login / Register / Dashboard / Task Modal          |
- +-------------------------+-------------------------------+
+ +----------------------------------------------------------+
+ |                   React Frontend                         |
+ |           (Nginx, Docker, Kubernetes)                    |
+ |      Login / Register / Dashboard / Task Modal           |
+ +-------------------------+--------------------------------+
                            |
                     REST API over HTTP
                            |
                            v
- +---------------------------------------------------------+
- |              Node.js + Express API                      |
- |           (Docker, Kubernetes, 1 replica)               |
- |   JWT Auth  /  Task CRUD  /  Redis Queue Dispatch       |
- +------------------+-----------------------+--------------+
-                    |                       |
-         +----------v----------+  +---------v-----------+
-         |      MongoDB        |  |        Redis         |
-         |  (tasks, users)     |  |   (task_queue list)  |
-         |  Kubernetes PVC     |  |  Kubernetes Service  |
-         +----------^----------+  +---------+-----------+
-                    |                       |
- +---------------------------------------------------------+
- |              Python Worker Service                      |
- |          (Docker, Kubernetes, 2 replicas)               |
- |   brpop from Redis  →  process  →  update MongoDB      |
- +---------------------------------------------------------+
+ +----------------------------------------------------------+
+ |              Node.js + Express API                       |
+ |           (Docker, Kubernetes, 1 replica)                |
+ |   JWT Auth  /  Task CRUD  /  Multer + Cloudinary         |
+ |             /  Redis Queue Dispatch                      |
+ +------+----------------+----------------+----------------+
+        |                |                |
+        v                v                v
+ +-------------+  +-------------+  +-------------+
+ |  MongoDB    |  |   Redis     |  | Cloudinary  |
+ | tasks/users |  | task_queue  |  | file store  |
+ |  K8s PVC    |  |  K8s Svc    |  |  external   |
+ +------^------+  +------^------+  +------^------+
+        |                |                |
+ +----------------------------------------------------------+
+ |              Python Worker Service                       |
+ |          (Docker, Kubernetes, 2 replicas)                |
+ |  brpop → fetch file → extract text → route → call LLM    |
+ |             → write result + provider chain              |
+ +-----------------------+----------------------------------+
+                         |
+                         v
+              +---------------------+
+              |   LLM Providers     |
+              | Groq / Cerebras /   |
+              | Gemini / OpenRouter |
+              +---------------------+
 ```
 
-![Task Detail with Logs](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/task-detail.png)
+The worker is the only component that talks to LLM providers directly. The backend never holds an LLM API key, which keeps the attack surface small and means provider credentials only need to be present on the worker deployment.
+
+![Task Detail with Logs](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/task-detail.png)
+
+---
+
+## LLM Routing Strategy
+
+The most architecturally interesting part of Cortex is the worker's routing layer in `worker/llm_router.py`. Each task selects a provider chain based on three input signals — the operation, the input length, and whether the input contains an image. The worker attempts the providers in order, and on rate limit, quota exhaustion, or error it falls back to the next provider in the chain.
+
+**Three routing axes.**
+
+| Signal | Why it matters | Routing decision |
+|---|---|---|
+| Image input | Only Gemini supports multimodal input among the four providers | Gemini first, OpenRouter fallback |
+| Input length > 15,000 chars | Gemini's 1M context window handles arbitrarily long input where Groq and Cerebras would hit their token limits | Gemini → Cerebras → OpenRouter |
+| Reasoning operations | Action items, key decisions, and "explain simply" benefit from a slightly more deliberate model | Groq → Cerebras → Gemini → OpenRouter |
+| Default (speed) | Most operations are short transformations where Groq's tokens-per-second is the dominant factor | Groq → Cerebras → Gemini → OpenRouter |
+
+**Why this chain.** Groq and Cerebras both serve Llama 3.3 70B and are among the fastest inference providers in production today. Groq's free tier has higher rate limits in practice, so it sits at the head of the default chain. Cerebras catches the spillover when Groq is rate-limited. Gemini handles anything that needs long context or multimodal input. OpenRouter sits at the tail of every chain as a universal fallback because its free Llama 3.3 70B endpoint, while slower, almost never returns 429.
+
+**Fallback detection.** The worker treats any of `429`, `rate limit`, `quota`, `resource_exhausted`, or `too many` in the exception message as a rate-limit signal worth retrying on the next provider. Any other exception also triggers a fallback but is logged as an error rather than a warning. The chain attempted is persisted on the task so failures are observable without grepping pod logs.
+
+```python
+def route_and_call(system_prompt, user_message, operation, input_length, has_image, image_data):
+    chain = get_provider_chain(operation, input_length, has_image)
+    for provider in chain:
+        try:
+            result = PROVIDER_CALLERS[provider](system_prompt, user_message)
+            return result, attempted
+        except Exception as e:
+            # rate-limit aware: continue to next provider
+            continue
+    raise Exception('All providers failed')
+```
+
+---
+
+## File Processing Pipeline
+
+File uploads flow through Cloudinary as a managed object store rather than being mounted into the worker container. This keeps the worker stateless and avoids the operational headache of persistent volumes on multiple replicas.
+
+**Upload path.** When a multipart request hits `POST /api/tasks`, Multer streams the file directly to Cloudinary using `multer-storage-cloudinary`. The Cloudinary URL and public ID are persisted on the Task document. The backend never writes to local disk. PDFs are uploaded with `resource_type: raw` and images with `resource_type: image` so Cloudinary applies the right delivery pipeline.
+
+**Extraction path.** When the worker picks up a task with a `fileUrl`, it downloads the file from Cloudinary. For PDFs, `PyMuPDF` (`fitz`) walks each page and extracts text, then truncates to 80,000 characters to stay safely within token limits across all providers. For images, the worker reads the bytes into base64 and passes them as a `Part.from_bytes` to Gemini's multimodal API. No OCR is performed — Gemini handles image understanding natively.
+
+**Size and type guardrails.** The backend rejects anything other than PDF, JPEG, PNG, or WebP at the Multer file filter, and caps file size at 10MB. Per-user filenames embed the user ID and a timestamp to avoid collisions in the shared Cloudinary folder.
 
 ---
 
 ## Worker Scaling Strategy
 
-The worker service is stateless by design. Each worker instance runs an infinite loop that calls `brpop` on the Redis `task_queue` list with a 5 second timeout. `brpop` is a blocking operation at the Redis level, meaning a worker only wakes up when a job exists. This avoids wasted CPU cycles from polling.
+The worker service is stateless. Each worker instance runs an infinite loop that calls `brpop` on the Redis `task_queue` list with a 5 second timeout. `brpop` is a blocking operation at the Redis level, meaning a worker only wakes up when a job exists. This avoids wasted CPU cycles from polling.
 
-Because each worker independently pops from the same queue, Redis guarantees that any given task ID is delivered to exactly one worker. There is no coordination overhead between workers and no risk of double processing.
+Because each worker independently pops from the same queue, Redis guarantees any given task ID is delivered to exactly one worker. There is no coordination overhead and no risk of double processing.
 
-Scaling is achieved by increasing the replica count on the worker Kubernetes Deployment. The current configuration runs 2 replicas. To handle higher load, the replica count is increased via a manifest update which Argo CD then automatically applies to the cluster. A Horizontal Pod Autoscaler can be added later to scale replicas based on a custom Redis queue depth metric exposed via a Prometheus exporter.
+Scaling is achieved by increasing the replica count on the worker Kubernetes Deployment. The current configuration runs 2 replicas. To handle higher load, the replica count is increased via a manifest update which Argo CD then automatically applies to the cluster. A Horizontal Pod Autoscaler can be added later to scale replicas based on Redis queue depth exposed via a Prometheus exporter.
 
 ```yaml
 spec:
   replicas: 2   # increase this value to scale out
 ```
 
----
-
-## Handling 100,000 Tasks Per Day
-
-At 100,000 tasks per day, the system processes approximately 1.16 tasks per second on average, with realistic peak bursts of 10 to 20 tasks per second during high traffic windows.
-
-**Queue throughput.** Redis can handle hundreds of thousands of operations per second on commodity hardware. The `task_queue` list never becomes the bottleneck at this scale. Each `lPush` from the backend and each `brpop` from a worker is an O(1) operation.
-
-**Worker throughput.** Each worker processes one task at a time sequentially. A single worker can complete approximately 200 to 500 simple string operations per second given the overhead of two MongoDB writes per task — one for `running`, one for `success` or `failed`. At 2 replicas, the fleet handles 400 to 1,000 tasks per second, well above the 1.16 per second daily average and sufficient for realistic peak bursts.
-
-**Database throughput.** MongoDB handles the write volume comfortably. Each task lifecycle generates 3 MongoDB operations: one insert on creation and two updates during processing. At 100,000 tasks per day, that is 300,000 operations per day or roughly 3.5 operations per second on average. MongoDB on modest hardware handles tens of thousands of operations per second.
-
-**Scaling path for higher load.** If task volume increases by 10x or 100x, the following changes apply in order: increase worker replicas, add a read replica for MongoDB task listing queries, shard the tasks collection by `userId`, and introduce a Redis Cluster for queue throughput above 100,000 operations per second.
+The natural limit on Cortex worker scaling is not Redis or MongoDB throughput — it is the free-tier rate limits of the upstream LLM providers. With four providers in the chain, the effective ceiling for a single user is comfortably above what any individual portfolio project will see, but at multi-tenant scale the right move is paid API keys plus per-user rate limiting at the backend layer.
 
 ---
 
-## Database Indexing Strategy
+## Database Schema and Indexing
 
-The `tasks` collection has one explicit index defined on `userId`:
+The `tasks` collection schema (defined in `backend/src/models/Task.js`) holds everything needed to render a task from any client without re-running the LLM call:
+
+| Field | Purpose |
+|---|---|
+| `userId` | Owner — every task query is scoped by this |
+| `title` | User-supplied label |
+| `operationType` | `preset` or `custom` |
+| `operation` | One of ten preset operations, or `custom` |
+| `customPrompt` | Only set when `operationType = custom` |
+| `inputText`, `fileUrl`, `fileType`, `filePublicId` | The task input |
+| `status` | `pending`, `running`, `success`, `failed` |
+| `result` | The LLM output |
+| `providerUsed`, `providerChain` | Final provider plus the full ordered chain attempted |
+| `logs` | Timestamped worker log lines for the task |
+
+**Indexes.** Two indexes are defined:
 
 ```javascript
-userId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'User',
-  required: true,
-  index: true,
-}
+userId: { type: ObjectId, ref: 'User', required: true, index: true }
+taskSchema.index({ userId: 1, createdAt: -1 })
 ```
 
-This index is the most critical one in the system. The most frequent query pattern is fetching all tasks belonging to a specific user, executed on every dashboard load:
+The compound `{ userId: 1, createdAt: -1 }` index serves the dashboard query `Task.find({ userId }).sort({ createdAt: -1 })` directly from the index — MongoDB walks the index entries already in sort order, so no in-memory sort step is needed. The single-field `userId` index supports counts and lookups by user without the sort key.
 
-```javascript
-Task.find({ userId: req.user.id }).sort({ createdAt: -1 })
-```
+The `users` collection has an implicit unique index on `email` enforced by `unique: true` in the Mongoose schema, which MongoDB compiles to a unique index automatically.
 
-Without the index, this query performs a full collection scan across all tasks from all users. With the index, MongoDB narrows the scan to only documents matching the `userId`, making the query O(log n) in the index lookup phase.
-
-**Secondary indexes to add at scale.** As the tasks collection grows, a compound index on `{ userId: 1, createdAt: -1 }` would allow MongoDB to satisfy the sort within the index itself without a separate sort step, reducing memory usage and query time further. A partial index on `{ status: 1 }` filtered to `pending` and `running` documents would accelerate admin or monitoring queries that check for stuck tasks.
-
-**The users collection** has an implicit unique index on `email` enforced by the `unique: true` field option in the Mongoose schema, which MongoDB converts to a unique index automatically.
+**Indexes to add at scale.** A partial index on `{ status: 1 }` filtered to `pending` and `running` documents would accelerate operational queries that check for stuck tasks. A TTL index on `createdAt` for failed tasks older than 30 days would cap storage growth.
 
 ---
 
@@ -109,11 +158,11 @@ Without the index, this query performs a full collection scan across all tasks f
 
 Redis is the queue layer between the backend and the worker. A Redis failure affects two things: new tasks cannot be enqueued, and workers cannot pick up tasks.
 
-**Impact on task creation.** The backend calls `redisClient.lPush()` after creating the task in MongoDB. If Redis is unavailable, this call throws an error. The task record exists in MongoDB with status `pending` but will never be processed automatically. The backend returns a 500 to the user.
+**Impact on task creation.** The backend calls `redisClient.lPush()` after creating the task in MongoDB. If Redis is unavailable, this call throws and the request returns 500. The task record exists in MongoDB with status `pending` but will never be processed automatically — it sits as an orphan until a manual re-queue.
 
-**Impact on the worker.** Workers call `brpop` in a loop with exception handling. If the Redis connection drops, the exception is caught, logged, and the worker sleeps for 2 seconds before retrying. Workers do not crash on Redis failure.
+**Impact on the worker.** Workers call `brpop` in a loop with broad exception handling. If the Redis connection drops, the exception is caught, logged, and the worker sleeps for 2 seconds before retrying. Workers do not crash on Redis failure.
 
-**Recovery path.** When Redis comes back online, workers reconnect automatically. Tasks that were pushed to the queue before the failure are still in Redis since Redis persists the list in memory. Tasks that failed to enqueue during the outage have their IDs in MongoDB and can be re-queued by a recovery script:
+**Recovery path.** When Redis comes back online, workers reconnect automatically. Tasks pushed to the queue before the failure are still in Redis because Redis persists the list in memory (and on disk if AOF is enabled). Tasks that failed to enqueue during the outage have their IDs in MongoDB and can be re-queued by a recovery script:
 
 ```python
 pending_tasks = db.tasks.find({"status": "pending"})
@@ -121,7 +170,22 @@ for task in pending_tasks:
     redis_client.lpush("task_queue", str(task["_id"]))
 ```
 
-**Production hardening.** For production, Redis should be deployed with a replica and Redis Sentinel or Redis Cluster for automatic failover. The backend should implement a retry with exponential backoff on the `lPush` call rather than immediately returning a 500.
+**Production hardening.** For production, Redis should be deployed with a replica and Redis Sentinel or Redis Cluster for automatic failover. The backend should implement retry with exponential backoff on `lPush` rather than immediately returning a 500 — a few hundred milliseconds of retry typically masks transient Redis blips entirely.
+
+---
+
+## Provider Failure Modes
+
+LLM providers fail in three distinct ways, each handled differently by the routing layer:
+
+| Failure mode | Detection | Response |
+|---|---|---|
+| Rate limit (429) | Substring match on common keywords in the exception | Log at warn level, advance to next provider |
+| Quota exhausted | Same substring match | Same — advance to next |
+| Hard error (timeout, malformed response, network) | Any other exception | Log at error level, advance to next |
+| All providers failed | Chain exhausted | Raise final exception, task marked `failed` |
+
+The single-task chain-wide failure case is rare in practice because the four providers do not share rate limit buckets. The likely cause of a chain-wide failure is the input being malformed in a way that all providers reject, or a network partition affecting the worker pod.
 
 ---
 
@@ -129,24 +193,19 @@ for task in pending_tasks:
 
 The GitOps model with Argo CD makes multi-environment deployment straightforward. Each environment is a separate Argo CD Application pointing to a different path in the infra repository.
 
-**Staging environment setup.** Create a `k8s-staging/` directory in the infra repository mirroring the structure of `k8s/` but with different values: fewer worker replicas (1 instead of 2), smaller resource limits, and environment-specific ConfigMaps pointing to a staging MongoDB and Redis instance. A staging Argo CD Application is configured to watch `k8s-staging/`:
+**Staging.** Create a `k8s-staging/` directory mirroring the structure of `k8s/` but with different values: 1 worker replica, smaller resource limits, environment-specific ConfigMaps pointing to a staging Mongo, Redis, and Cloudinary folder, and ideally a separate set of LLM API keys to isolate quota usage. A staging Argo CD Application watches `k8s-staging/`.
 
-```yaml
-source:
-  path: k8s-staging
-```
+**Production.** The existing `k8s/` directory serves production. The production Argo CD Application watches the `main` branch of the infra repo. The CI/CD pipeline updates image tags in `k8s/` deployments on every push to the application repo's `main` branch.
 
-**Production environment setup.** The existing `k8s/` directory serves production. The production Argo CD Application watches the `main` branch of the infra repo. The CI/CD pipeline updates image tags in `k8s/` deployments on every push to the application repo's `main` branch.
+**Promotion flow.** Feature branch → merge to `staging` branch → workflow builds images tagged with the staging commit SHA → updates `k8s-staging/` → validate → merge `staging` to `main` → workflow updates `k8s/` → production picks up the change via Argo CD.
 
-**Promotion flow.** A developer merges a feature branch into a `staging` branch of the app repo. A separate GitHub Actions workflow builds images tagged with the staging commit SHA and updates `k8s-staging/` in the infra repo. After validation on staging, the change is merged to `main`, which triggers the production pipeline updating `k8s/`.
-
-**Environment separation in practice.** The only differences between staging and production manifests are the image tags, replica counts, resource limits, and ConfigMap values such as MongoDB URI, Redis URL, and JWT secret. All structural Kubernetes manifests including Deployments, Services, Ingress, and probes are identical, ensuring staging accurately reflects what production will run.
+**What differs between staging and production.** Image tags, replica counts, resource limits, ConfigMap values (Mongo URI, Redis URL, JWT secret, Cloudinary folder, LLM API keys). All structural manifests — Deployments, Services, Ingress, probes — are identical, ensuring staging accurately reflects what production will run.
 
 ---
 
 ## CI/CD Pipeline
 
-![GitHub Actions Pipeline](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/pipeline.png)
+![GitHub Actions Pipeline](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/pipeline.png)
 
 The pipeline has three stages that run sequentially on every push to `main`.
 
@@ -154,13 +213,13 @@ The pipeline has three stages that run sequentially on every push to `main`.
 
 **Build and Push.** Docker images are built for all three services using multi-stage Dockerfiles. Images are tagged with both `latest` and the short Git commit SHA (7 characters). Both tags are pushed to Docker Hub under the `ishaan102` namespace.
 
-**Update Infra Repo.** The pipeline checks out the `ai-task-platform-infra` repository using a GitHub Personal Access Token stored as a secret. It runs `sed` to replace the image tag in each deployment manifest with the new commit SHA tag, commits the change, and pushes. Argo CD detects the change within minutes and applies it to the cluster automatically.
+**Update Infra Repo.** The pipeline checks out the infra repository using a GitHub Personal Access Token stored as a secret. It runs `sed` to replace the image tag in each deployment manifest with the new commit SHA tag, commits the change, and pushes. Argo CD detects the change within minutes and applies it to the cluster automatically.
 
 ---
 
 ## GitOps with Argo CD
 
-![Argo CD Dashboard](https://raw.githubusercontent.com/Ishaan2510/ai-task-platform/main/docs/argocd.png)
+![Argo CD Dashboard](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/argocd.png)
 
 Argo CD runs in the `argocd` namespace of the same Kubernetes cluster. It is configured with auto-sync enabled, meaning any change pushed to the `k8s/` directory in the infra repository is automatically applied to the cluster without manual intervention.
 
@@ -172,6 +231,10 @@ The Application manifest sets `prune: true` so resources removed from the manife
 
 Passwords are hashed using bcrypt with a cost factor of 12 before storage. JWTs are signed with HS256 using a secret stored as a Kubernetes Secret injected as an environment variable at runtime. All API routes except `/api/auth/register`, `/api/auth/login`, and `/health` require a valid JWT in the `Authorization` header.
 
-Rate limiting is applied to the auth endpoints: 10 requests per 15-minute window per IP, enforced by `express-rate-limit`. The Helmet middleware sets secure HTTP headers on all responses. No secrets or credentials are committed to either repository. All sensitive values flow through Kubernetes Secrets or GitHub Actions secrets at runtime.
+Rate limiting is applied to the auth endpoints: 10 requests per 15-minute window per IP, enforced by `express-rate-limit`. The Helmet middleware sets secure HTTP headers on all responses. CORS is enforced against an allowlist built from `FRONTEND_URL` / `FRONTEND_URLS` environment variables — anything not on the list is rejected.
 
-Docker images are built with non-root users in both the backend and worker containers, reducing the blast radius of any container escape. Multi-stage builds ensure that development dependencies, build tools, and source files that are not needed at runtime are excluded from the final image layer.
+**File uploads.** Multer is configured with a strict MIME type filter (`application/pdf`, `image/jpeg`, `image/png`, `image/webp`) and a 10MB size cap. Files never touch local disk on the backend — they stream straight to Cloudinary, scoped to a per-user folder via the user ID in the public ID.
+
+**Secrets.** No secrets or credentials are committed to either repository. The four LLM API keys, Cloudinary credentials, JWT secret, and Mongo credentials all flow through Kubernetes Secrets or GitHub Actions secrets at runtime. The backend never holds LLM API keys — only the worker does.
+
+**Container hardening.** Docker images are built with non-root users in both the backend and worker containers, reducing the blast radius of any container escape. Multi-stage builds ensure that development dependencies, build tools, and source files not needed at runtime are excluded from the final image layer.
