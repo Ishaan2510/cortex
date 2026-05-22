@@ -114,7 +114,7 @@ export default function TaskModal({ task, onClose }) {
         setDetail(data);
         if (data.status === 'success' || data.status === 'failed') clearInterval(iv);
       } catch { clearInterval(iv); }
-    }, 1500);
+    }, 3000);
     return () => clearInterval(iv);
   }, [task]);
 

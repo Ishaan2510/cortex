@@ -49,28 +49,45 @@ async function callCerebras(systemPrompt, userMessage) {
 }
 
 async function callGemini(systemPrompt, userMessage, imageData = null) {
-  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-  const parts = [];
-  if (imageData) {
-    parts.push({
-      inlineData: {
-        mimeType: imageData.mimeType,
-        data: imageData.data.toString('base64'),
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GOOGLE_API_KEY,
+  });
+
+  try {
+    const parts = [];
+
+    if (imageData) {
+      parts.push({
+        inlineData: {
+          mimeType: imageData.mimeType,
+          data: imageData.data.toString('base64'),
+        },
+      });
+    }
+
+    parts.push({ text: userMessage });
+
+    const r = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts }],
+      config: {
+        systemInstruction: systemPrompt,
+        temperature: 0.7,
+        maxOutputTokens: 2048,
       },
     });
-  }
-  parts.push({ text: userMessage });
 
-  const r = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: [{ role: 'user', parts }],
-    config: {
-      systemInstruction: systemPrompt,
-      temperature: 0.7,
-      maxOutputTokens: 2048,
-    },
-  });
-  return r.text;
+    return r.text;
+  } catch (err) {
+    console.error('GEMINI RAW ERROR:', err);
+
+    if (err.response) {
+      console.error('STATUS:', err.response.status);
+      console.error('BODY:', err.response.data);
+    }
+
+    throw err;
+  }
 }
 
 async function callOpenRouter(systemPrompt, userMessage) {
