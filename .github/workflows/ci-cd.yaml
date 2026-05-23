@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [kubernetes]
 
 env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
