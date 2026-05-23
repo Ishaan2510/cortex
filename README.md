@@ -2,9 +2,11 @@
 
 # Cortex
 
-**A multi-user AI-powered content processing workspace built on the MERN stack with a Python worker, intelligent multi-provider LLM routing, Redis queue, Docker, and Kubernetes.**
+**A multi-provider LLM orchestration platform with intelligent routing, multimodal input, and GitOps-driven Kubernetes deployment.**
 
-Task-aware LLM routing with automatic fallback · File-aware processing (PDF and images) · Real-time task tracking · GitOps deployment
+Cortex treats LLM calls as a managed resource — routing each request to the optimal provider based on operation class, input size, and modality, with automatic failover across a four-provider chain.
+
+### [→ Live Demo](https://cortex-ai-task-platform.vercel.app)
 
 [![GitHub Actions](https://img.shields.io/badge/CI/CD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Ishaan2510/cortex/actions)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/u/ishaan102)
@@ -15,19 +17,69 @@ Task-aware LLM routing with automatic fallback · File-aware processing (PDF and
 
 ---
 
-## What This Is
+## What This Solves
 
-Cortex is a personal AI workspace where users submit text, PDFs, or images and run one of ten preset operations or a fully custom prompt against them. Each task is queued into Redis, picked up asynchronously by a Python worker, and routed across four LLM providers — Groq, Cerebras, Gemini, and OpenRouter — using task-aware intelligent routing with automatic fallback on rate limit or error. The entire system runs on Kubernetes with GitOps-driven deployments via Argo CD.
+Single-provider LLM applications are brittle. Free-tier rate limits trigger at the worst moments. One provider's outage takes the whole product down. Long-context tasks fail on providers with small context windows. Multimodal inputs only work on a subset of providers. Hardcoding any one provider into the application means accepting all of these failure modes.
 
-This is not a tutorial project. Every component runs in a container, every deployment is declared as Kubernetes manifests, and every push to `main` triggers a full build-and-deploy pipeline that updates the cluster automatically.
+Cortex addresses this with a routing layer that selects providers per-request based on the input. The application code never talks to a specific provider — it submits a task to the router, which picks the right chain and handles failover automatically. The chain attempted and the final provider used are both persisted on the task and displayed in the UI, so failures are observable and routing decisions are auditable.
 
 ---
 
-## Screenshots
+## How Routing Works
+
+Each task selects a provider chain based on three signals — the operation, the input length, and whether the input contains an image. The first provider in the chain is tried first; on rate limit (429), quota exhaustion, or any other error, the worker falls through to the next provider automatically. Across four providers in the chain, the probability of all four failing simultaneously is effectively zero.
+
+| Signal | Routing decision | Why |
+|---|---|---|
+| Image input | Gemini → OpenRouter | Gemini is the only multimodal provider in the chain |
+| Input > 15,000 chars | Gemini → Cerebras → OpenRouter | Gemini's 1M context window handles arbitrarily long input |
+| Reasoning operations (action items, key decisions, explain simply) | Groq → Cerebras → Gemini → OpenRouter | Slightly more deliberate output benefits these ops |
+| Default (speed) | Groq → Cerebras → Gemini → OpenRouter | Groq's tokens-per-second is the dominant factor |
+
+Rate-limit detection looks for `429`, `rate limit`, `quota`, `resource_exhausted`, or `too many` in the exception message, advances to the next provider on a hit, and logs at warn level. Any other exception also triggers fallback but logs at error level. If the entire chain fails the task is marked `failed` and the full chain is persisted for diagnostics.
+
+---
+
+## Live Demo Screenshots
 
 ![Dashboard](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/dashboard.png)
 
 ![Task Detail](https://raw.githubusercontent.com/Ishaan2510/cortex/main/docs/task-detail.png)
+
+---
+
+## Two Deployment Topologies
+
+Cortex ships in two configurations. The live demo runs the simplified single-process topology to fit free-tier hosting constraints. The production-grade topology with a Python worker, Redis queue, Kubernetes, and Argo CD is documented in [ARCHITECTURE.md](ARCHITECTURE.md) and lives on the `kubernetes` branch.
+
+### Live Demo Topology — `main` branch
+
+```
+ React (Vercel) ──HTTPS──▶ Node + Express (Render free) ──▶ MongoDB Atlas M0
+                                  │                  │
+                                  │                  └──▶ Cloudinary (files)
+                                  │
+                                  └─▶ LLM routing in-process
+                                       Groq · Cerebras · Gemini · OpenRouter
+```
+
+The Node backend hosts the LLM routing layer directly. Tasks are created synchronously, persisted to MongoDB as `pending`, and processed by an async function in the same process that updates the document as it transitions through `running` → `success`/`failed`. The frontend polls `/api/tasks/:id` every 1.5 seconds until terminal. Total cost: zero. Total credit cards required: zero.
+
+### Production Topology — `kubernetes` branch + [cortex-infra](https://github.com/Ishaan2510/cortex-infra)
+
+```
+ React (Nginx) ──▶ Node + Express ──┬──▶ MongoDB (StatefulSet, PVC)
+                                    │
+                                    └──▶ Redis (queue) ─┐
+                                                        │
+                                  Python Worker × N ───┘
+                                  │
+                                  └─▶ LLM routing + PyMuPDF extraction
+```
+
+Three Deployments (frontend, backend, worker), each behind a Service. Worker runs at 2 replicas by default, scaling out via replica count — `brpop` on Redis guarantees exactly-once delivery per task. Argo CD watches the infra repo with `auto-sync`, `prune`, and `selfHeal` enabled. GitHub Actions builds and pushes images on every commit to `main`, then `sed`-updates the image tags in the infra repo, which Argo CD picks up within minutes.
+
+The production topology is the one documented in [ARCHITECTURE.md](ARCHITECTURE.md). Most architectural depth — worker scaling math, Redis failure recovery, multi-environment promotion — applies to this topology.
 
 ---
 
@@ -37,22 +89,23 @@ This is not a tutorial project. Every component runs in a container, every deplo
 |---|---|
 | Frontend | React 19, Vite, Tailwind CSS v4 |
 | Backend API | Node.js, Express 5, JWT (HS256), bcrypt, Multer |
-| Worker | Python 3.11, pymongo, redis-py, PyMuPDF |
+| Worker (K8s topology) | Python 3.11, pymongo, redis-py, PyMuPDF |
 | LLM Providers | Groq (Llama 3.3 70B), Cerebras (Llama 3.3 70B), Google Gemini 2.0 Flash, OpenRouter (Llama 3.3 70B free) |
 | File Storage | Cloudinary |
-| Database | MongoDB 7 |
-| Queue | Redis 7 |
+| Database | MongoDB 7 (Atlas M0 in live demo, self-hosted in K8s topology) |
+| Queue (K8s topology) | Redis 7 |
 | Containerization | Docker with multi-stage builds and non-root users |
 | Orchestration | Kubernetes on Docker Desktop |
 | GitOps | Argo CD with auto-sync, prune, and self-heal |
 | CI/CD | GitHub Actions |
 | Registry | Docker Hub |
+| Hosting (live demo) | Vercel (frontend), Render (backend), MongoDB Atlas, Cloudinary |
 
 ---
 
 ## Supported Operations
 
-Ten preset operations plus a fully custom prompt mode. Each preset has a hand-tuned system prompt defined in `worker/operations.py`.
+Ten preset operations plus a fully custom prompt mode. Each preset has a hand-tuned system prompt.
 
 | Operation | Description |
 |---|---|
@@ -68,113 +121,78 @@ Ten preset operations plus a fully custom prompt mode. Each preset has a hand-tu
 | Translate to Hindi | Natural Hindi translation in Devanagari |
 | Custom Prompt | Provide your own system prompt for full control |
 
----
-
-## LLM Routing Strategy
-
-The worker selects an ordered chain of providers per task based on three signals: the operation, the input length, and whether the input contains an image. The first provider in the chain is tried first; on rate limit (429), quota exhaustion, or any other error the worker falls back to the next provider in the chain automatically.
-
-| Signal | Routing decision |
-|---|---|
-| Image input | Gemini first (only multimodal provider in the chain), OpenRouter fallback |
-| Long input (>15,000 chars) | Gemini first (1M context window), then Cerebras, then OpenRouter |
-| Reasoning operations (action items, key decisions, explain simply) | Groq → Cerebras → Gemini → OpenRouter |
-| Speed operations (default) | Groq → Cerebras → Gemini → OpenRouter |
-
-The full chain attempted is stored on the task in `providerChain` along with the final provider in `providerUsed`. The UI displays both so the user can see exactly how the result was produced and which fallbacks were hit.
-
----
-
-## How It Works
-
-A user submits a task with a title, an operation (preset or custom), and either text input, a file (PDF or image up to 10MB), or both. The Express backend uploads any attached file directly to Cloudinary via Multer's `CloudinaryStorage`, creates a task record in MongoDB with status `pending`, and pushes the task ID onto a Redis list using `lPush`. A Python worker calls `brpop` in a blocking loop, picks up the ID, marks the task as `running` in MongoDB, downloads and extracts the file content (PyMuPDF for PDFs, base64 for images), builds a system prompt for the selected operation, routes the request through the appropriate provider chain, and writes the result back with status `success` or `failed` along with timestamped logs and the full provider chain attempted. The React frontend polls every 1.5 seconds until the task reaches a terminal state and displays the result inline with markdown rendering.
+Each operation accepts text input, a PDF or image attachment (up to 10 MB), or both. PDFs are extracted via PyMuPDF and truncated to 80,000 characters before being passed to the LLM. Images are sent as base64 to Gemini's multimodal endpoint.
 
 ---
 
 ## Local Development
 
-**Step 1.** Start MongoDB and Redis via Docker Compose, from the repo root:
+### Live demo topology (Node-only, no worker, no Redis)
 
 ```bash
+# from backend/
+npm install
+npm run dev
+
+# from frontend/, in another terminal
+npm install
+npm run dev
+```
+
+Set `MONGO_URI` in `backend/.env.local` to either a local MongoDB or an Atlas free cluster. Set the four LLM API keys and Cloudinary credentials in the same file. Open `http://localhost:5173`.
+
+### Production topology (Python worker + Redis + Docker)
+
+Switch to the `kubernetes` branch first, then:
+
+```bash
+# Start MongoDB and Redis
 docker compose up mongodb redis -d
+
+# Backend
+cd backend && npm install && npm run dev
+
+# Worker (in another terminal)
+cd worker && pip install -r requirements.txt && python worker.py
+
+# Frontend (in another terminal)
+cd frontend && npm install && npm run dev
 ```
 
-**Step 2.** Start the backend, from `backend/`:
-
-```bash
-npm install
-npm run dev
-```
-
-**Step 3.** Start the Python worker, from `worker/`:
-
-```bash
-pip install -r requirements.txt
-python worker.py
-```
-
-**Step 4.** Start the frontend, from `frontend/`:
-
-```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173`.
-
----
-
-## Full Stack via Docker
-
-Run all services together from the repo root:
+Or run everything in containers:
 
 ```bash
 docker compose up --build
 ```
 
-Open `http://localhost:3000`.
-
 ---
 
 ## Environment Variables
 
-The backend and worker both load environment variables from `.env.local` (local dev) or `.env.docker` (when running in containers), selected via the `APP_ENV` variable.
-
-**`backend/.env.local`**
+**`backend/.env.local`** (both topologies, but the K8s topology also needs `REDIS_URL`)
 
 ```
+NODE_ENV=development
+PORT=5000
 APP_ENV=local
+
 MONGO_URI=mongodb://admin:adminpass@localhost:27017/aitaskplatform?authSource=admin
-REDIS_URL=redis://localhost:6379
 JWT_SECRET=your_secret_here
 JWT_EXPIRES_IN=7d
-PORT=5000
 FRONTEND_URL=http://localhost:5173
-NODE_ENV=development
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
-
-**`worker/.env.local`**
-
-```
-APP_ENV=local
-MONGO_URI=mongodb://admin:adminpass@localhost:27017/aitaskplatform?authSource=admin
-REDIS_URL=redis://localhost:6379
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
+# LLM providers (live demo topology only — in K8s topology these go to the worker)
 GROQ_API_KEY=your_groq_key
 CEREBRAS_API_KEY=your_cerebras_key
 GOOGLE_API_KEY=your_gemini_key
 OPENROUTER_API_KEY=your_openrouter_key
 ```
 
-All four LLM provider keys are free to obtain — sign up at `console.groq.com`, `cloud.cerebras.ai`, `aistudio.google.com`, and `openrouter.ai`. Cloudinary also has a generous free tier that covers this project comfortably.
+All four LLM provider keys and Cloudinary are free to obtain — sign up at `console.groq.com`, `cloud.cerebras.ai`, `aistudio.google.com`, `openrouter.ai`, and `cloudinary.com`.
 
 ---
 
@@ -192,6 +210,8 @@ kubectl apply -f k8s/frontend/
 kubectl apply -f k8s/ingress/
 ```
 
+See [cortex-infra](https://github.com/Ishaan2510/cortex-infra) for Argo CD setup.
+
 ---
 
 ## CI/CD Pipeline
@@ -202,7 +222,7 @@ Every push to `main` triggers a three-stage GitHub Actions pipeline:
 
 1. **Lint** — ESLint runs on backend and frontend source. Failures block all subsequent stages.
 2. **Build and Push** — Docker images are built for all three services using multi-stage Dockerfiles and pushed to Docker Hub tagged with both `latest` and the short commit SHA.
-3. **Update Infra Repo** — The pipeline checks out the infra repository using a stored secret token, updates the image tags in each deployment manifest via `sed`, commits, and pushes. Argo CD detects the change within minutes and applies it to the cluster.
+3. **Update Infra Repo** — The pipeline checks out [cortex-infra](https://github.com/Ishaan2510/cortex-infra) using a stored secret token, updates the image tags in each deployment manifest via `sed`, commits, and pushes. Argo CD detects the change within minutes and applies it to the cluster.
 
 ---
 
@@ -216,7 +236,7 @@ Argo CD runs in the `argocd` namespace and watches the `k8s/` directory of the i
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture document covering LLM routing, file processing, worker scaling, high-volume task handling, database indexing, Redis failure recovery, and multi-environment deployment.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture document — LLM routing internals, file processing pipeline, worker scaling, database indexing, Redis failure recovery, provider failure modes, and multi-environment deployment.
 
 ---
 
@@ -226,12 +246,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture document coveri
 cortex/
 ├── backend/
 │   ├── src/
-│   │   ├── config/          db.js, redis.js, cloudinary.js, upload.js
+│   │   ├── config/          db.js, cloudinary.js, upload.js
 │   │   ├── middleware/       auth.js
 │   │   ├── models/           User.js, Task.js
-│   │   └── routes/           auth.js, tasks.js
+│   │   ├── routes/           auth.js, tasks.js
+│   │   └── services/         llmRouter.js, operations.js, fileProcessor.js, taskProcessor.js
 │   ├── Dockerfile
-│   ├── .dockerignore
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -241,21 +261,13 @@ cortex/
 │   │   └── pages/            Login.jsx, Register.jsx, Dashboard.jsx
 │   ├── nginx.conf
 │   └── Dockerfile
-├── worker/
-│   ├── worker.py
-│   ├── llm_router.py
-│   ├── operations.py
-│   ├── file_processor.py
-│   ├── requirements.txt
-│   └── Dockerfile
 ├── docs/
 │   └── dashboard.png, task-detail.png, argocd.png, pipeline.png
-├── docker-compose.yml
 ├── ARCHITECTURE.md
-└── .github/
-    └── workflows/
-        └── ci-cd.yaml
+└── README.md
 ```
+
+The `kubernetes` branch additionally includes `worker/` (Python), `docker-compose.yml`, and the original Redis-backed routing in the Node backend.
 
 ---
 
