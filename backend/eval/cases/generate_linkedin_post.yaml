@@ -1,0 +1,76 @@
+operation: generate_linkedin_post
+cases:
+  - id: project_launch
+    description: Project launch post should have hook, value, and CTA — under 300 words, max 3 hashtags
+    input: |
+      We just shipped Cortex, an open-source multi-provider LLM orchestration platform.
+      It routes requests across Groq, Cerebras, Gemini, and OpenRouter with automatic
+      fallback on rate limits. Built it because single-provider LLM apps kept breaking
+      for me during demos. Six months of evenings and weekends, now live and free.
+    checks:
+      - type: max_length
+        chars: 2200
+      - type: must_contain
+        terms: ["Cortex"]
+      - type: must_not_contain
+        terms: ["I cannot", "as an AI", "language model"]
+      - type: regex_match
+        pattern: "^(?:[^#]*#[^#\\n]*){0,3}[^#]*$"
+        flags: "s"
+
+  - id: lesson_learned
+    description: Reflective lesson post should have personal voice and clear takeaway
+    input: |
+      I spent three months optimizing the wrong thing. We thought our backend was
+      slow because of database queries — turned out it was DNS resolution. Lesson:
+      always profile before you optimize. Want to share what I learned about
+      observability tooling along the way.
+    checks:
+      - type: max_length
+        chars: 2200
+      - type: must_not_contain
+        terms: ["I cannot help", "as an AI"]
+      - type: min_length
+        chars: 200
+
+  - id: tech_announcement
+    description: Technical announcement should be accessible without dumbing down
+    input: |
+      Anthropic released Claude 4.7 today. The interesting bit: they've added native
+      MCP server integration that lets the model call out to external tools without
+      function-calling glue code. This is a meaningful step toward agents that
+      actually work in production.
+    checks:
+      - type: max_length
+        chars: 2200
+      - type: must_contain
+        terms: ["Claude"]
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+
+  - id: career_milestone
+    description: Career milestone post should be authentic, grateful, not braggy
+    input: |
+      Just accepted my first internship offer — joining a small AI infrastructure
+      team this summer. Took six months and 80+ applications to get here. Want to
+      thank everyone who reviewed my resume, did mock interviews, and reminded me
+      this stuff is hard for everyone.
+    checks:
+      - type: max_length
+        chars: 2200
+      - type: must_not_contain
+        terms: ["I cannot"]
+      - type: min_length
+        chars: 250
+
+  - id: short_input
+    description: Short input should be expanded into a proper post with hook and substance
+    input: |
+      Built my first Kubernetes deployment this weekend. Big learning curve.
+    checks:
+      - type: max_length
+        chars: 2200
+      - type: must_not_contain
+        terms: ["I cannot", "too short", "more information"]
+      - type: min_length
+        chars: 300

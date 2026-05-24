@@ -1,0 +1,68 @@
+operation: translate_hindi
+cases:
+  - id: business_message
+    description: Business message should be translated to Hindi in Devanagari script
+    input: |
+      We are pleased to inform you that your application has been successful. Please
+      contact our HR team to begin the onboarding process. Welcome to the team.
+    checks:
+      - type: regex_match
+        pattern: "[\\u0900-\\u097F]"
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry", "as an AI"]
+      - type: min_length
+        chars: 50
+
+  - id: technical_documentation
+    description: Technical content with proper nouns should keep proper nouns in original but translate prose
+    input: |
+      To install the package, run npm install in your terminal. The installation
+      will take a few minutes depending on your internet connection. Once complete,
+      you can start the development server by running npm run dev.
+    checks:
+      - type: regex_match
+        pattern: "[\\u0900-\\u097F]"
+      - type: must_not_contain
+        terms: ["I cannot", "as an AI"]
+      - type: min_length
+        chars: 50
+
+  - id: emotional_content
+    description: Personal/emotional content should be translated with natural Hindi phrasing
+    input: |
+      I want to thank you for everything you have done over the past year. Your
+      support during the difficult times meant more than I can express. I hope we
+      remain in touch wherever life takes us next.
+    checks:
+      - type: regex_match
+        pattern: "[\\u0900-\\u097F]"
+      - type: must_not_contain
+        terms: ["I cannot"]
+      - type: min_length
+        chars: 80
+
+  - id: news_paragraph
+    description: News-style writing should retain meaning when translated
+    input: |
+      The Reserve Bank of India announced today that interest rates will remain
+      unchanged at 6.5 percent for the third consecutive quarter. The decision
+      reflects ongoing concerns about inflation and currency stability.
+    checks:
+      - type: regex_match
+        pattern: "[\\u0900-\\u097F]"
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+      - type: min_length
+        chars: 80
+
+  - id: short_phrase
+    description: Short phrase should still produce a valid Hindi translation
+    input: |
+      Thank you very much for your help. I really appreciate it.
+    checks:
+      - type: regex_match
+        pattern: "[\\u0900-\\u097F]"
+      - type: must_not_contain
+        terms: ["I cannot", "too short"]
+      - type: min_length
+        chars: 10

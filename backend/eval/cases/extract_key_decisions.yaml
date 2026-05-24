@@ -1,0 +1,76 @@
+operation: extract_key_decisions
+cases:
+  - id: planning_meeting
+    description: Planning meeting with clear decisions should produce both sections with content
+    input: |
+      Q3 planning, May 12. We decided to ship the new auth flow before the dashboard
+      refresh because the auth bugs are blocking enterprise deals. Marcus pushed back
+      on the timeline but we agreed to revisit if engineering hits the two-week mark
+      without a beta. Open: do we sunset the legacy API by EOY or extend support
+      another quarter? Need data from the support team on legacy usage by Friday.
+      Also open: should we hire a second platform engineer this quarter or wait for
+      Q4? Compensation budget is approved either way.
+    checks:
+      - type: must_contain
+        terms: ["Decisions Made", "Open Questions"]
+        case_sensitive: false
+      - type: must_contain
+        terms: ["auth"]
+      - type: min_length
+        chars: 150
+
+  - id: design_review
+    description: Design review with mixed decisions and unresolved items
+    input: |
+      Design review for the onboarding overhaul. The team chose the three-step
+      progressive disclosure pattern over the single long form. Sara will produce
+      the high-fidelity mockups by Friday. We also agreed the empty state will
+      include a sample workspace, not a tutorial. Still open: whether to use
+      first-party email verification or rely on SSO providers exclusively. The
+      tradeoff is signup friction versus account hygiene.
+    checks:
+      - type: must_contain
+        terms: ["Decisions Made", "Open Questions"]
+        case_sensitive: false
+      - type: must_contain
+        terms: ["onboarding"]
+
+  - id: only_decisions
+    description: Input with decisions but no open questions should still produce both sections (empty Open Questions OK)
+    input: |
+      Engineering sync. Three decisions reached: we're moving to Postgres from MySQL
+      for the new service, we'll use Argo CD for deployments, and we've picked
+      Prometheus + Grafana for observability. Implementation starts next week.
+    checks:
+      - type: must_contain
+        terms: ["Decisions Made"]
+        case_sensitive: false
+      - type: must_contain
+        terms: ["Postgres", "Argo"]
+
+  - id: only_open_questions
+    description: Input with all open items should produce the Open Questions section, empty Decisions section is acceptable
+    input: |
+      Pre-planning brainstorm. Unclear: should we expand to a second region this
+      quarter or focus on stability? Unknown: is the current MongoDB instance
+      sufficient for projected growth or do we need to migrate? Also up in the air:
+      hiring strategy — generalists or specialists for the platform team?
+    checks:
+      - type: must_contain
+        terms: ["Open Questions"]
+        case_sensitive: false
+      - type: min_length
+        chars: 100
+
+  - id: ambiguous_input
+    description: Ambiguous input with implicit decisions should still produce structured output, not refuse
+    input: |
+      We've been going back and forth on the new feature for weeks. I think we're
+      finally aligned that it's worth building, even if we're not sure exactly what
+      it'll look like yet. Probably starting with a prototype next sprint.
+    checks:
+      - type: must_contain
+        terms: ["Decisions Made", "Open Questions"]
+        case_sensitive: false
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]

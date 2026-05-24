@@ -1,0 +1,80 @@
+operation: explain_simply
+cases:
+  - id: quantum_entanglement
+    description: Physics concept should be explained without jargon dump
+    input: |
+      Quantum entanglement is a phenomenon in which the quantum states of two or
+      more particles become correlated in such a way that the state of each particle
+      cannot be described independently of the others, even when the particles are
+      separated by large distances. Measurement of one particle instantaneously
+      affects the state of the other, a property that Einstein famously called
+      "spooky action at a distance."
+    checks:
+      - type: must_not_contain
+        terms: ["quantum states", "spooky action at a distance", "described independently"]
+      - type: min_length
+        chars: 200
+      - type: max_length
+        chars: 2500
+      - type: must_not_contain
+        terms: ["I cannot"]
+
+  - id: tcp_handshake
+    description: Networking concept should use everyday analogies, no protocol jargon
+    input: |
+      The TCP three-way handshake is the mechanism by which two endpoints establish
+      a reliable connection. The initiator sends a SYN packet, the receiver responds
+      with SYN-ACK, and the initiator confirms with an ACK packet. This sequence
+      ensures both sides agree on initial sequence numbers and that the connection
+      is bidirectional.
+    checks:
+      - type: must_not_contain
+        terms: ["SYN-ACK", "endpoints", "sequence numbers", "bidirectional"]
+      - type: min_length
+        chars: 200
+      - type: max_length
+        chars: 2500
+
+  - id: gradient_descent
+    description: ML concept should be made accessible without losing the core idea
+    input: |
+      Gradient descent is an iterative optimization algorithm used to minimize a
+      cost function by updating parameters in the opposite direction of the gradient
+      of the cost function with respect to those parameters. The learning rate
+      hyperparameter controls the magnitude of each update.
+    checks:
+      - type: must_not_contain
+        terms: ["hyperparameter", "iterative optimization", "with respect to"]
+      - type: min_length
+        chars: 200
+      - type: must_not_contain
+        terms: ["I cannot"]
+
+  - id: kubernetes_pods
+    description: Devops concept should be explainable to a non-technical person
+    input: |
+      A Kubernetes Pod is the smallest deployable unit in the Kubernetes object
+      model. It encapsulates one or more containers that share network and storage
+      resources and are scheduled together onto a node. Pods are ephemeral —
+      Kubernetes does not heal individual Pods, only their parent controller
+      objects like Deployments or StatefulSets.
+    checks:
+      - type: must_not_contain
+        terms: ["encapsulates", "ephemeral", "scheduled together", "parent controller"]
+      - type: min_length
+        chars: 200
+
+  - id: cryptocurrency
+    description: Crypto concept should be explained in plain English
+    input: |
+      A blockchain is a distributed ledger maintained by a network of nodes that
+      reach consensus on the ordering and validity of transactions through a
+      cryptographic proof-of-work or proof-of-stake mechanism. New transactions are
+      grouped into blocks and appended to the chain in an immutable record.
+    checks:
+      - type: must_not_contain
+        terms: ["distributed ledger", "cryptographic", "proof-of-work", "immutable record"]
+      - type: min_length
+        chars: 200
+      - type: must_not_contain
+        terms: ["I cannot"]

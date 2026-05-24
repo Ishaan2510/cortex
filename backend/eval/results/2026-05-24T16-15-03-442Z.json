@@ -1,0 +1,2450 @@
+{
+  "timestamp": "2026-05-24T16:15:03.442Z",
+  "commit": "local",
+  "regression_threshold_pp": 5,
+  "operations": {
+    "draft_email": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "explain_simply": {
+      "pass_rate": 0.8,
+      "passed": 4,
+      "total_cases": 5
+    },
+    "extract_action_items": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "extract_key_decisions": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "generate_linkedin_post": {
+      "pass_rate": 0.8,
+      "passed": 4,
+      "total_cases": 5
+    },
+    "generate_tweet_thread": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "rewrite_casual": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "rewrite_formal": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "summarize": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "translate_hindi": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    }
+  },
+  "regressions": [],
+  "cases": [
+    {
+      "id": "business_followup",
+      "operation": "draft_email",
+      "description": "Standard business follow-up should produce a complete email with subject, greeting, body, sign-off",
+      "passed": true,
+      "durationMs": 605,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Follow-up on Integration Discussion and Proposal\n\nDear Anjali,\n\nI hope this email finds you well. I wanted to follow up on our integration discussion from last Tuesday and confirm the scope of the proposal you requested by the end of this week. Specifically, I would like to clarify whether Stripe would like us to handle webhook retry logic on our side or if it will be handled on your end.\n\nPlease let me know your preference so I can ensure the proposal accurately reflects the requirements. I look forward to hearing back from you and finalizing the proposal.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Anjali"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 599 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 599 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "polite_decline",
+      "operation": "draft_email",
+      "description": "Declining an offer professionally should be polite but clear",
+      "passed": true,
+      "durationMs": 529,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Declining Interview Invitation for Current Opportunity\n\nDear Recruiter,\n\nI appreciate the invitation to interview for the role at Acme Corp and am grateful for the time you took to reach out to me. However, I have recently accepted another opportunity that aligns with my current career goals. While I am excited about this new path, I am impressed by Acme Corp's mission and values, and I would like to keep the door open for potential future opportunities.\n\nThank you again for considering me for this position, and I wish the team all the best in finding the right candidate. I look forward to potentially reconnecting in the future.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot help",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 672 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1200
+          },
+          "passed": true,
+          "detail": "Output is 672 chars (max 1200)"
+        }
+      ]
+    },
+    {
+      "id": "intro_outreach",
+      "operation": "draft_email",
+      "description": "Cold intro email should have hook, value, and clear ask",
+      "passed": true,
+      "durationMs": 751,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Exploring Opportunities for Collaboration and Feedback on Cortex\n\nDear Sarah Chen,\n\nI came across your background in collaborative editing systems and your current role as a product manager at Notion. I was impressed by your experience and thought you might be interested in learning about Cortex, a multi-provider LLM orchestration platform I'm building.\n\nI'd love to get your feedback on our routing model, and I believe your insights would be invaluable in helping us shape the future of our platform. Would you be available for a 15-minute call to discuss Cortex and hear your thoughts on our approach?\n\nI look forward to the opportunity to speak with you and learn from your expertise.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Sarah"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot write",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 250
+          },
+          "passed": true,
+          "detail": "Output is 726 chars (min 250)"
+        }
+      ]
+    },
+    {
+      "id": "thank_you",
+      "operation": "draft_email",
+      "description": "Thank-you email after an interview should be specific and warm but professional",
+      "passed": true,
+      "durationMs": 536,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Thank you for the opportunity to interview at Stripe\n\nDear David Park,\n\nI wanted to express my sincere gratitude for taking the time to speak with me during my technical interview at Stripe. I truly appreciated the opportunity to discuss distributed systems patterns and learn more about the company's innovative approaches. Your thoughtful perspective on idempotency in payment workflows was particularly insightful, and it has further reinforced my interest in the role.\n\nI was impressed by the team's work and Stripe's commitment to excellence. Once again, thank you for your time and for sharing your expertise. I am eager to contribute my skills and experience to the team and look forward to the next steps in the process.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "David"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 764 chars (min 150)"
+        }
+      ]
+    },
+    {
+      "id": "apology",
+      "operation": "draft_email",
+      "description": "Apology email should acknowledge the issue, take responsibility, propose a fix",
+      "passed": true,
+      "durationMs": 496,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Missed Quarterly Metrics Report for Board Meeting\n\nDear [CEO's Name],\n\nI am writing to acknowledge that the quarterly metrics report, which was due yesterday for our board meeting, was not delivered on time. I apologize for the delay and any inconvenience this may have caused.\n\nUnfortunately, I was blocked on data access issues for the past two days, which hindered my ability to complete the report. I am now working diligently to finalize the document and am committed to delivering it to you by the end of this Friday.\n\nPlease be assured that I am taking all necessary steps to ensure the report is completed as soon as possible. If you have any questions or concerns, please do not hesitate to reach out to me.\n\nThank you for your understanding and I look forward to delivering the report by Friday EOD.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm just an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 845 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 845 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "quantum_entanglement",
+      "operation": "explain_simply",
+      "description": "Physics concept should be explained without jargon dump",
+      "passed": true,
+      "durationMs": 565,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Imagine you have two toy cars that are connected in a special way. If you do something to one car, the other car will instantly do the same thing, even if they're on opposite sides of the room. Now, imagine these cars are so connected that they can be on opposite sides of the universe, and they'll still do the same thing at the exact same time. That's kind of like what's happening with quantum entanglement, but instead of toy cars, it's tiny particles like atoms or electrons that are connected in this special way. When something happens to one particle, it instantly affects the other, no matter how far apart they are. It's a pretty weird and cool phenomenon that doesn't seem to follow the normal rules of space and time.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "quantum states",
+              "spooky action at a distance",
+              "described independently"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 729 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2500
+          },
+          "passed": true,
+          "detail": "Output is 729 chars (max 2500)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "tcp_handshake",
+      "operation": "explain_simply",
+      "description": "Networking concept should use everyday analogies, no protocol jargon",
+      "passed": false,
+      "durationMs": 636,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Imagine you're meeting a friend at a park. You want to make sure you both know where to meet and that you can find each other. \n\nFirst, you send a message saying \"Hey, I'm here\" (that's like the SYN packet). \nYour friend responds with \"I'm here too, and I got your message\" (that's like the SYN-ACK packet). \nThen, you send another message saying \"I got your response, let's meet\" (that's like the ACK packet). \n\nThis way, you both know you can communicate with each other, and you can start talking. It's like a handshake, but with messages, to make sure you have a strong connection.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "SYN-ACK",
+              "endpoints",
+              "sequence numbers",
+              "bidirectional"
+            ]
+          },
+          "passed": false,
+          "detail": "Found forbidden terms: SYN-ACK"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 585 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2500
+          },
+          "passed": true,
+          "detail": "Output is 585 chars (max 2500)"
+        }
+      ]
+    },
+    {
+      "id": "gradient_descent",
+      "operation": "explain_simply",
+      "description": "ML concept should be made accessible without losing the core idea",
+      "passed": true,
+      "durationMs": 10638,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Imagine you're on a hill and you want to get to the bottom. The hill is like a cost function, and you want to find the lowest point. \n\nGradient descent is like taking small steps down the hill. It looks at the steepness of the hill (that's the gradient) and takes a step in the opposite direction. This helps you move closer to the bottom.\n\nThe learning rate is like how big your steps are. If your steps are too big, you might jump over the bottom of the hill. If they're too small, it will take a long time to get there. You need to find the right step size to get to the bottom quickly and safely.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "hyperparameter",
+              "iterative optimization",
+              "with respect to"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 600 chars (min 200)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "kubernetes_pods",
+      "operation": "explain_simply",
+      "description": "Devops concept should be explainable to a non-technical person",
+      "passed": true,
+      "durationMs": 1021,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Think of a Kubernetes Pod like a house. The house has rooms, and each room is like a container. All the rooms in the house share the same address and utilities. \n\nWhen you want to build a house, you don't build just one room, you build the whole house. Similarly, when you want to run some containers, you run them together in a Pod.\n\nNow, imagine the houses are temporary and can be easily replaced. If one house gets damaged, you don't fix it, you just build a new one. That's kind of like what happens with Pods. If a Pod has a problem, the system doesn't try to fix it, it just makes a new one to replace it. \n\nThe system keeps track of the houses (Pods) through a neighborhood manager (like Deployments or StatefulSets). The neighborhood manager makes sure there are always the right number of houses (Pods) in the neighborhood.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "encapsulates",
+              "ephemeral",
+              "scheduled together",
+              "parent controller"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 833 chars (min 200)"
+        }
+      ]
+    },
+    {
+      "id": "cryptocurrency",
+      "operation": "explain_simply",
+      "description": "Crypto concept should be explained in plain English",
+      "passed": true,
+      "durationMs": 1085,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Imagine a big notebook that lots of people have a copy of. This notebook is special because it keeps track of all the transactions, like money movements, that happen within a group. \n\nWhen someone wants to make a transaction, they tell the whole group. The group then checks to make sure it's a valid transaction, like making sure the person has enough money. \n\nOnce the group agrees that the transaction is okay, it gets added to a new page in the notebook, along with other transactions that happened around the same time. This page is like a block. \n\nWhen the block is full, it gets locked and added to the notebook, which is the blockchain. Once it's added, it can't be changed, so it's like writing with permanent ink. \n\nThe notebook is kept by lots of people, called nodes, so even if one person tries to cheat, the others can stop them. It's like having multiple witnesses to an event, so everyone knows what really happened.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "distributed ledger",
+              "cryptographic",
+              "proof-of-work",
+              "immutable record"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 932 chars (min 200)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "project_meeting",
+      "operation": "extract_action_items",
+      "description": "Standard project meeting should yield action items with owners where mentioned",
+      "passed": true,
+      "durationMs": 733,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Draft Q3 roadmap doc — Priya\n[ ] Share Q3 roadmap doc with Marcus for engineering input — Priya\n[ ] Coordinate with the platform team on the auth refactor — Marcus\n[ ] Decide on using Auth0 or Clerk by end of next week — Marcus\n[ ] Escalate dark mode palette approval to Anjali — David\n[ ] Approve the dark mode palette — Anjali\n[ ] Own the customer interview synthesis — Priya\n[ ] Attend next sync on Thursday 3pm",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Priya",
+              "Marcus"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "no action items"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 418 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "email_thread",
+      "operation": "extract_action_items",
+      "description": "Email thread should yield discrete action items, not a summary paragraph",
+      "passed": true,
+      "durationMs": 611,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Have new flow mockups ready by Wednesday — Sara\n[ ] Review mockups by Friday — Marcus\n[ ] Review mockups by Friday — Priya\n[ ] Pull the latest funnel numbers from last quarter — David\n[ ] Book the kickoff meeting for Monday afternoon — Anjali Mehta\n[ ] Confirm availability for the kickoff meeting — team@cortex.ai \n[ ] Scope engineering effort early next week \n[ ] Let Anjali Mehta know if deadlines are unrealistic — team@cortex.ai",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Sara",
+              "David"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I'm sorry",
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "mixed_content",
+      "operation": "extract_action_items",
+      "description": "Mixed discussion + actions should extract only the actionable items",
+      "passed": true,
+      "durationMs": 308,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Set up a triage rotation starting next sprint — Marcus\n[ ] Update the engineering handbook with the new SLA by Friday — Priya\n[ ] Announce the new SLA in #eng — Priya",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Marcus",
+              "Priya"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "no_action_items",
+      "operation": "extract_action_items",
+      "description": "Input with no clear actions should produce empty or near-empty output, not hallucinate items",
+      "passed": true,
+      "durationMs": 225,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* [ ] Share thoughts on the recent industry conference \n* [ ] Research trends around smaller specialized models versus the continued scaling of frontier models \n* [ ] Discuss whether the current investment pace is sustainable",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 600
+          },
+          "passed": true,
+          "detail": "Output is 225 chars (max 600)"
+        }
+      ]
+    },
+    {
+      "id": "casual_message",
+      "operation": "extract_action_items",
+      "description": "Casual messaging-style input with implicit actions should be parsed correctly",
+      "passed": true,
+      "durationMs": 371,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Grab coffee with the new contractor to walk through the codebase \n[ ] Ping architecture diagrams — Raj\n[ ] Revoke the old vendor's access — Marcus \n[ ] Confirm ownership of revoking old vendor's access — Marcus",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 214 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "planning_meeting",
+      "operation": "extract_key_decisions",
+      "description": "Planning meeting with clear decisions should produce both sections with content",
+      "passed": true,
+      "durationMs": 348,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "## Decisions Made\n* Ship the new auth flow before the dashboard refresh\n* Revisit the timeline if engineering hits the two-week mark without a beta\n* Compensation budget is approved for hiring a second platform engineer\n\n## Open Questions\n* Whether to sunset the legacy API by end of year (EOY) or extend support another quarter\n* Whether to hire a second platform engineer this quarter or wait for Q4\n* Need data from the support team on legacy usage by Friday to inform the legacy API decision",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Decisions Made",
+              "Open Questions"
+            ],
+            "case_sensitive": false
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "auth"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 495 chars (min 150)"
+        }
+      ]
+    },
+    {
+      "id": "design_review",
+      "operation": "extract_key_decisions",
+      "description": "Design review with mixed decisions and unresolved items",
+      "passed": true,
+      "durationMs": 320,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "## Decisions Made\n* The team will use the three-step progressive disclosure pattern for the onboarding overhaul instead of the single long form.\n* Sara will produce high-fidelity mockups by Friday.\n* The empty state will include a sample workspace, not a tutorial.\n\n## Open Questions\n* Whether to use first-party email verification or rely on SSO providers exclusively.\n* The tradeoff between signup friction and account hygiene in the context of email verification versus SSO providers.",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Decisions Made",
+              "Open Questions"
+            ],
+            "case_sensitive": false
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "onboarding"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        }
+      ]
+    },
+    {
+      "id": "only_decisions",
+      "operation": "extract_key_decisions",
+      "description": "Input with decisions but no open questions should still produce both sections (empty Open Questions OK)",
+      "passed": true,
+      "durationMs": 217,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "## Decisions Made\n* Moving to Postgres from MySQL for the new service\n* Using Argo CD for deployments\n* Picking Prometheus + Grafana for observability\n\n## Open Questions\n* None mentioned in the provided content",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Decisions Made"
+            ],
+            "case_sensitive": false
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Postgres",
+              "Argo"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        }
+      ]
+    },
+    {
+      "id": "only_open_questions",
+      "operation": "extract_key_decisions",
+      "description": "Input with all open items should produce the Open Questions section, empty Decisions section is acceptable",
+      "passed": true,
+      "durationMs": 325,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "## Decisions Made\n* None\n\n## Open Questions\n* Should we expand to a second region this quarter or focus on stability?\n* Is the current MongoDB instance sufficient for projected growth or do we need to migrate?\n* What hiring strategy should we use for the platform team: generalists or specialists?",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Open Questions"
+            ],
+            "case_sensitive": false
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 297 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "ambiguous_input",
+      "operation": "extract_key_decisions",
+      "description": "Ambiguous input with implicit decisions should still produce structured output, not refuse",
+      "passed": true,
+      "durationMs": 1467,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "## Decisions Made\n* The new feature is worth building\n* A prototype of the new feature will be started next sprint\n\n## Open Questions\n* The exact design and details of the new feature are still unclear",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Decisions Made",
+              "Open Questions"
+            ],
+            "case_sensitive": false
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "project_launch",
+      "operation": "generate_linkedin_post",
+      "description": "Project launch post should have hook, value, and CTA — under 300 words, max 3 hashtags",
+      "passed": false,
+      "durationMs": 719,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "The frustration of watching your demo fall apart due to rate limits is all too real. \nI've been there, and it's a painful experience - especially when you're trying to showcase the power of large language models (LLMs).\n\nThat's why I'm excited to announce that we've just shipped Cortex, an open-source multi-provider LLM orchestration platform. \nThis game-changing platform routes requests across multiple providers, including Groq, Cerebras, Gemini, and OpenRouter, with automatic fallback on rate limits.\n\nThe journey to get here wasn't easy - it took six months of evenings and weekends, but it was worth it. \nCortex is now live and free for anyone to use, because I believe that everyone should have access to reliable and scalable LLM capabilities.\n\nWhat will you build with Cortex? \nWill you use it to power your next AI project or to simplify your existing workflows? #LLM #AI #OpenSource",
+      "checks": [
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2200
+          },
+          "passed": true,
+          "detail": "Output is 896 chars (max 2200)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Cortex"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "as an AI",
+              "language model"
+            ]
+          },
+          "passed": false,
+          "detail": "Found forbidden terms: language model"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^(?:[^#]*#[^#\\n]*){0,3}[^#]*$",
+            "flags": "s"
+          },
+          "passed": true,
+          "detail": "Output matches /^(?:[^#]*#[^#\\n]*){0,3}[^#]*$/s"
+        }
+      ]
+    },
+    {
+      "id": "lesson_learned",
+      "operation": "generate_linkedin_post",
+      "description": "Reflective lesson post should have personal voice and clear takeaway",
+      "passed": true,
+      "durationMs": 2147,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "I'll never forget the three months I spent optimizing the wrong thing. \nOur team was convinced that our backend was slow due to database queries, but it turned out that DNS resolution was the real culprit.\n\nThis experience taught me a valuable lesson: always profile before you optimize. \nIt's easy to make assumptions about where the bottlenecks are, but without data, you're just guessing.\n\nAs I delved deeper into optimizing our backend, I learned a lot about observability tooling and how it can help you identify issues quickly. \nI'd love to share my knowledge with you and hear about your experiences.\n\nWhat's the most surprising performance issue you've encountered, and how did you go about solving it? \n#Observability #PerformanceOptimization #DevOps",
+      "checks": [
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2200
+          },
+          "passed": true,
+          "detail": "Output is 759 chars (max 2200)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot help",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 759 chars (min 200)"
+        }
+      ]
+    },
+    {
+      "id": "tech_announcement",
+      "operation": "generate_linkedin_post",
+      "description": "Technical announcement should be accessible without dumbing down",
+      "passed": true,
+      "durationMs": 2101,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Breaking news in the world of AI: Anthropic just released Claude 4.7, and it's a game-changer.\n\nThe latest update brings native MCP server integration, allowing the model to seamlessly interact with external tools without the need for cumbersome function-calling glue code. This is a significant milestone in the development of AI agents that can actually deliver in real-world production environments.\n\nImagine being able to harness the power of AI to automate tasks, make data-driven decisions, and drive business outcomes without the complexity of custom integrations. This is the future of AI, and it's arriving faster than we thought.\n\nAs we continue to push the boundaries of what's possible with AI, one question remains: what are the most impactful ways we can leverage these advancements to drive innovation and growth in our industries?\n\n#AI #Innovation #FutureOfWork",
+      "checks": [
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2200
+          },
+          "passed": true,
+          "detail": "Output is 877 chars (max 2200)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Claude"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "career_milestone",
+      "operation": "generate_linkedin_post",
+      "description": "Career milestone post should be authentic, grateful, not braggy",
+      "passed": true,
+      "durationMs": 2303,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "The wait is over - I'm thrilled to share that I've just accepted my first internship offer to join a small AI infrastructure team this summer.\n\nIt wasn't an easy journey, though. It took six months and over 80 applications to get to this point. But the hard work and perseverance paid off, and I couldn't be more grateful.\n\nI want to extend a huge thank you to everyone who supported me along the way - those who took the time to review my resume, conducted mock interviews, and reminded me that this process is challenging for everyone. Your guidance and encouragement made all the difference.\n\nAs I prepare to start this new chapter, I'm reminded that success is often the result of a community effort. I'm excited to learn, grow, and contribute to my new team, and I'm looking forward to paying it forward to others who are on a similar journey.\n\nWhat advice would you give to someone who's just starting their internship or career journey? #careergoals #internship #AI",
+      "checks": [
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2200
+          },
+          "passed": true,
+          "detail": "Output is 972 chars (max 2200)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 250
+          },
+          "passed": true,
+          "detail": "Output is 972 chars (min 250)"
+        }
+      ]
+    },
+    {
+      "id": "short_input",
+      "operation": "generate_linkedin_post",
+      "description": "Short input should be expanded into a proper post with hook and substance",
+      "passed": true,
+      "durationMs": 973,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "I just spent my entire weekend tackling the infamous Kubernetes learning curve, and I'm thrilled to say I've successfully deployed my first application. \n\nThe journey was not easy - from understanding pods and nodes to configuring deployments and services, it felt like drinking from a firehose at times. But the sense of accomplishment I feel now is overwhelming.\n\nIf you're also new to Kubernetes, I want to assure you that the struggle is worth it. The ability to orchestrate and manage containerized applications at scale is a game-changer, and the skills you develop will open doors to new opportunities.\n\nAs I look back on my experience, I realize that the key to success lies in persistence and a willingness to learn from failure. So, don't be discouraged if you encounter setbacks - use them as stepping stones to improve your understanding.\n\nWhat's your experience with Kubernetes? Are you just starting out, or have you already mastered the art of deployment? I'd love to hear about your journey and any tips you can share. #Kubernetes #DevOps #CloudComputing",
+      "checks": [
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 2200
+          },
+          "passed": true,
+          "detail": "Output is 1070 chars (max 2200)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "too short",
+              "more information"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 300
+          },
+          "passed": true,
+          "detail": "Output is 1070 chars (min 300)"
+        }
+      ]
+    },
+    {
+      "id": "career_lessons",
+      "operation": "generate_tweet_thread",
+      "description": "Career advice should be converted into a numbered thread starting with 1/",
+      "passed": true,
+      "durationMs": 2098,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "1/ Just spent 2 years applying to jobs and made EVERY mistake. But I learned a thing or two. Want to know the secrets to landing your dream job?\n\n2/ Stop over-optimizing your resume! 1 hour is enough for those bullets. Move on to what really matters.\n\n3/ Ditch the written project descriptions! Create a Loom demo instead and show off your skills.\n\n4/ Networking tip: ditch LinkedIn and contribute to open source projects. It's a game-changer.\n\n5/ Don't be afraid to follow up after rejection. It actually works! \n\n6/ Quality over quantity: apply to fewer jobs but customize each one heavily. It's worth the effort.\n\n7/ The best project to showcase? The one you'd build anyway. Passion shines through and gets you hired.\n\n8/ Ready to land your dream job? Apply these lessons and watch your career take off!",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "1/"
+          },
+          "passed": true,
+          "detail": "Output matches /1//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "2/"
+          },
+          "passed": true,
+          "detail": "Output matches /2//"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 400
+          },
+          "passed": true,
+          "detail": "Output is 806 chars (min 400)"
+        }
+      ]
+    },
+    {
+      "id": "technical_explainer",
+      "operation": "generate_tweet_thread",
+      "description": "Technical concept should be split into digestible tweets, numbered properly",
+      "passed": true,
+      "durationMs": 1074,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "1/ Database dilemma: SQL or NoSQL? The choice isn't about which is better, but about tradeoffs. What are you willing to sacrifice?\n\n2/ SQL: consistency, complex queries, and decades of expertise. But, rigid schemas can be a deal-breaker.\n\n3/ NoSQL: flexibility, easy scaling, and fast development. But, be prepared to lose transactions and think critically about data access.\n\n4/ With SQL, you get strong consistency and powerful queries. But, changing your schema can be a nightmare.\n\n5/ NoSQL databases shine with flexible schemas and horizontal scaling. But, data access patterns require careful planning.\n\n6/ So, which one is right for you? It depends on your project's needs. Weigh the tradeoffs and choose wisely.\n\n7/ Ultimately, the choice between SQL and NoSQL comes down to your priorities. Don't pick a side, pick the best tool for the job.\n\n8/ Now, go build something amazing with the right database for your needs!",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "1/"
+          },
+          "passed": true,
+          "detail": "Output matches /1//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "2/"
+          },
+          "passed": true,
+          "detail": "Output matches /2//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "3/"
+          },
+          "passed": true,
+          "detail": "Output matches /3//"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "SQL"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        }
+      ]
+    },
+    {
+      "id": "hot_take",
+      "operation": "generate_tweet_thread",
+      "description": "Opinion thread should have a hook tweet that grabs attention",
+      "passed": true,
+      "durationMs": 2824,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "1/ Warning: most \"scaling\" advice is from engineers who'll never reach that scale. What's the real challenge?\n\n2/ Startup engineers face different problems: clarity, correctness, and shipping speed. Not throughput.\n\n3/ Premature optimization is a trap. Focus on building something that works.\n\n4/ Correctness is key. Don't sacrifice it for hypothetical future gains.\n\n5/ Shipping speed matters. Get your product out the door, then iterate.\n\n6/ Clarity is crucial. Understand your product and users before scaling.\n\n7/ Let's focus on real startup challenges, not hypothetical scaling issues.\n\n8/ Build for today, not tomorrow's hypothetical traffic spike.",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "1/"
+          },
+          "passed": true,
+          "detail": "Output matches /1//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "2/"
+          },
+          "passed": true,
+          "detail": "Output matches /2//"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 400
+          },
+          "passed": true,
+          "detail": "Output is 654 chars (min 400)"
+        }
+      ]
+    },
+    {
+      "id": "book_summary",
+      "operation": "generate_tweet_thread",
+      "description": "Book content should be condensed into a thread covering key ideas",
+      "passed": true,
+      "durationMs": 1422,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "1/ Did you know your brain is making decisions without you even realizing it? Introducing the 2 systems that control your mind: fast & emotional, and slow & logical. #ThinkingFastAndSlow\n\n2/ System 1: fast, automatic, and emotional. It's what drives most of our decisions, often unconsciously. #cognitivebiases\n\n3/ System 2: slow, deliberate, and logical. But it's often overpowered by System 1, leading to irrational choices. #decisionmaking\n\n4/ Dozens of cognitive biases emerge from this 2-system structure. From investing to medical diagnosis, they impact everything. #behavioraleconomics\n\n5/ What does this mean for public policy? How can we make better decisions when our brains are wired to be irrational? #policyreform\n\n6/ Kahneman's work reveals the flaws in human cognition. But it also gives us a chance to improve our decision-making. #criticalthinking\n\n7/ So, the next time you make a decision, ask yourself: is it System 1 or System 2 in charge? #selfawareness\n\n8/ Take control of your decisions and start thinking slow. Your rational self will thank you. #ThinkingFastAndSlow",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "1/"
+          },
+          "passed": true,
+          "detail": "Output matches /1//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "2/"
+          },
+          "passed": true,
+          "detail": "Output matches /2//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "3/"
+          },
+          "passed": true,
+          "detail": "Output matches /3//"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "System"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        }
+      ]
+    },
+    {
+      "id": "short_input",
+      "operation": "generate_tweet_thread",
+      "description": "Short input should still be expanded into a real thread, not refused",
+      "passed": true,
+      "durationMs": 2133,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "1/ Mind blown: 3 years of code reviews transformed my coding style. I used to write for myself, now I write for the reader. What changed?\n\n2/ I used to prioritize brevity over clarity. Not anymore. Readability is key to maintainable code.\n\n3/ Code reviews taught me to consider the next dev who'll touch my code. Empathy in coding is a game-changer.\n\n4/ Comments are no longer an afterthought. They're an essential part of the code, making it accessible to all.\n\n5/ My code is now more modular, concise, and easy to understand. Thanks, code reviews!\n\n6/ The biggest shift? I'm no longer attached to my code. Feedback is welcome, and I'm open to improvement.\n\n7/ If you're not doing code reviews, start now. Your future self (and colleagues) will thank you.\n\n8/ Ready to level up your coding skills? Prioritize readability, empathy, and feedback. Your code will thank you.",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "1/"
+          },
+          "passed": true,
+          "detail": "Output matches /1//"
+        },
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "2/"
+          },
+          "passed": true,
+          "detail": "Output matches /2//"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "too short",
+              "more information"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 300
+          },
+          "passed": true,
+          "detail": "Output is 871 chars (min 300)"
+        }
+      ]
+    },
+    {
+      "id": "corporate_to_casual",
+      "operation": "rewrite_casual",
+      "description": "Stiff corporate message should become warm and conversational",
+      "passed": true,
+      "durationMs": 1473,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "I wanted to follow up on our previous conversations about the project. We've made some changes to the timeline, and I thought you should know. The new deadline is now November 30th. If this affects your plans or you have any questions, please don't hesitate to reach out to me as soon as you can. I'm here to help and want to make sure you're comfortable with the revised schedule.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "Pursuant",
+              "I am writing to inform",
+              "do not hesitate",
+              "at your earliest convenience"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "November"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 381 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "legal_to_friendly",
+      "operation": "rewrite_casual",
+      "description": "Legal-leaning prose should be made approachable",
+      "passed": true,
+      "durationMs": 384,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "So, just to make things clear, when you start using our platform, we'll assume you're on board with our terms of service. And if we ever have a disagreement, we'll work it out through arbitration, which is a pretty straightforward process. This will all happen in the same jurisdiction where our company is officially based.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "aforementioned",
+              "shall be deemed",
+              "henceforth",
+              "thereto"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "terms"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 324 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "dense_business_to_casual",
+      "operation": "rewrite_casual",
+      "description": "Dense business prose should be more readable and conversational",
+      "passed": true,
+      "durationMs": 1899,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "So, we just wrapped up our quarterly review and one of the key takeaways is that we're going to be pouring some extra resources into our customer success team. This is all about making sure our customers stick with us for the long haul, and we're really excited about it. To make it happen, we'll be bringing on three new full-time team members and setting aside a special budget for the tools they'll need to do their jobs.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "Following the conclusion",
+              "it has been determined",
+              "encompass"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "customer success"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 424 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "technical_formal_to_casual",
+      "operation": "rewrite_casual",
+      "description": "Formal technical writeup should become readable to a peer",
+      "passed": true,
+      "durationMs": 641,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "So, the way this is set up is by using a special kind of attention mechanism that's hierarchical and sparse, which is paired with something called rotary position embeddings. This combination is really clever because it lets us scale things up without the cost getting out of control - we're talking sub-quadratic, which is a big deal. And the best part? We don't have to sacrifice performance to get there. In fact, when we test it on benchmarks that have really long contexts, it performs just as well as the traditional full-attention methods.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "utilizes",
+              "in conjunction with",
+              "performance parity"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "attention"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 546 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "terse_formal_to_warm",
+      "operation": "rewrite_casual",
+      "description": "Terse formal message should become genuinely warm without losing the point",
+      "passed": true,
+      "durationMs": 344,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "It looks like we need a bit more information from you. Could you please resubmit your request with all the necessary documents? We'll be happy to take another look once we have everything we need.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 40
+          },
+          "passed": true,
+          "detail": "Output is 196 chars (min 40)"
+        }
+      ]
+    },
+    {
+      "id": "casual_email_to_formal",
+      "operation": "rewrite_formal",
+      "description": "Casual email should become formal — contractions removed, structure improved, meaning preserved",
+      "passed": true,
+      "durationMs": 2027,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "I am writing to inform you that it will be necessary to extend the deadline by one week. Due to the team's current workload with the other release, it has become clear that the original deadline of this Friday is no longer feasible. I would appreciate it if you could advise whether this revised timeline poses any issues. If so, I suggest we schedule a call to discuss possible alternatives and find a solution that meets everyone's needs.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "gonna",
+              "wanna",
+              "lmk",
+              "hop on",
+              "swamped",
+              "heads up"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "deadline"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 440 chars (min 100)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1200
+          },
+          "passed": true,
+          "detail": "Output is 440 chars (max 1200)"
+        }
+      ]
+    },
+    {
+      "id": "slang_to_professional",
+      "operation": "rewrite_formal",
+      "description": "Slang-heavy input should be reformatted with professional vocabulary",
+      "passed": true,
+      "durationMs": 510,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "The newly implemented dashboard is experiencing significant technical issues, resulting in considerable frustration among the team members. Despite ongoing efforts to identify the source of the problems, the available logs have proven to be of limited utility. It would be beneficial to have a representative from the infrastructure team review the situation to provide assistance in resolving these issues. The current technical difficulties are causing a substantial obstruction to our workflow, and team members are beginning to express concerns.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "super",
+              "pretty frustrated",
+              "kinda",
+              "a bunch of",
+              "people are"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "dashboard"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 549 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "idea_to_proposal",
+      "operation": "rewrite_formal",
+      "description": "Casual idea should read like a formal proposal",
+      "passed": true,
+      "durationMs": 1533,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "It is essential that we implement a more precise method of tracking our Large Language Model (LLM) expenses. Currently, our approach is inadequate, and the recent bill exceeded our expectations. To better manage our costs, we should establish comprehensive dashboards to monitor our expenditures and designate a specific individual to oversee the budget.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "probably",
+              "kinda",
+              "flying blind",
+              "way higher",
+              "maybe"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "LLM",
+              "costs"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 354 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "technical_casual_to_formal",
+      "operation": "rewrite_formal",
+      "description": "Technical content in casual register should retain technical accuracy in formal voice",
+      "passed": true,
+      "durationMs": 513,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "We encountered an unusual race condition in the worker pool yesterday, wherein two workers inadvertently processed the same job. This issue arose due to the non-atomic nature of the BRPOP operation across our Redis cluster configuration. To resolve this problem, we temporarily mitigated the issue by transitioning to a single-shard setup. However, it is essential that we reassess this solution to determine its scalability and potential long-term implications. We would appreciate any insights or thoughts on this matter to ensure a more robust and efficient solution.",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "weird",
+              "kinda",
+              "yesterday — looks",
+              "anyone got"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "race condition",
+              "Redis"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 570 chars (min 150)"
+        }
+      ]
+    },
+    {
+      "id": "short_casual",
+      "operation": "rewrite_formal",
+      "description": "Short casual input should still be formalized, not refused",
+      "passed": true,
+      "durationMs": 309,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "I would like to schedule a meeting for tomorrow to discuss our Q3 objectives and related matters. Would you be available to synchronize our schedules and allocate a suitable time for this conversation?",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "can we sync",
+              "chat about",
+              "stuff",
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 30
+          },
+          "passed": true,
+          "detail": "Output is 201 chars (min 30)"
+        }
+      ]
+    },
+    {
+      "id": "news_article",
+      "operation": "summarize",
+      "description": "Standard news article should produce 3-5 bullet points with key entities preserved",
+      "passed": true,
+      "durationMs": 2761,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* OpenAI will launch GPT-5 in early 2026, its first major model release in over a year, with significant improvements in coding, mathematical reasoning, and multi-step planning tasks.\n* The release is expected to increase competitive pressure on Anthropic and Google, which have recently released their own models, Claude 4 and Gemini 2.5, respectively.\n* GPT-5 will be available through both the consumer ChatGPT product and the API, although pricing has not been disclosed.\n* The announcement coincides with OpenAI reaching $5 billion in annual recurring revenue.\n* The launch of GPT-5 is expected to further establish OpenAI's position in the market, following a year without a major model release.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 5 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "GPT-5",
+              "OpenAI"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry",
+              "as an AI",
+              "language model"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1200
+          },
+          "passed": true,
+          "detail": "Output is 701 chars (max 1200)"
+        }
+      ]
+    },
+    {
+      "id": "technical_abstract",
+      "operation": "summarize",
+      "description": "Dense technical content should compress without losing core concepts",
+      "passed": true,
+      "durationMs": 1742,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* A novel attention mechanism is proposed to reduce the quadratic complexity of standard transformers to O(n log n) using a hierarchical sparse pattern.\n* The approach decomposes the attention matrix into a hierarchy of blocks, computing dense attention within local windows and sparse attention across distant tokens via learned routing.\n* The model achieves perplexity within 0.3 of full attention while using 4.2x less memory at sequence length 16384, and learns interpretable routing patterns aligned with linguistic phenomena.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 3 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "attention",
+              "complexity"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 531 chars (min 200)"
+        }
+      ]
+    },
+    {
+      "id": "meeting_notes",
+      "operation": "summarize",
+      "description": "Unstructured meeting notes should be summarized with clear key takeaways",
+      "passed": true,
+      "durationMs": 2677,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* Q2 delivery: 14 of 18 planned features shipped, with the mobile app overhaul delayed to Q3 due to design rework.\n* Key product updates: a new design system is now adopted across 80% of product surfaces, and API rate limits will be increased for paid tiers in the next sprint.\n* Marketing campaign results: 32% increase in qualified leads, but a 4-point drop in conversion-to-paid rates, prompting a joint review of onboarding between marketing and product.\n* Next steps: a joint review of onboarding will be held next week, and Q4 planning will start on September 15.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 4 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Q3"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 569 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "narrative_text",
+      "operation": "summarize",
+      "description": "Story-style input should be summarized factually, not retold",
+      "passed": true,
+      "durationMs": 2647,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* The hike to Triund began at 6 AM from McLeodganj, with initial expectations of summiting by noon.\n* The group encountered increasing difficulty, including a sharp temperature drop, snow patches, and a whiteout at the false summit, leading to a decision to descend immediately.\n* Two group members turned back due to cold, and the remaining four faced a challenging four-hour descent due to icy patches, ultimately returning to McLeodganj at 4:30 PM, exhausted but safe.\n* The experience highlighted the need to respect the Dhauladhars, even in May, due to unpredictable and potentially hazardous weather conditions.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 4 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 617 chars (min 150)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 617 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "short_input",
+      "operation": "summarize",
+      "description": "Very short input is still expected to produce valid bullet output, not refuse",
+      "passed": true,
+      "durationMs": 2299,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* Revenue increased by 18% year-over-year in Q2.\n* The enterprise segment experienced strong growth.\n* Softness in SMB renewals partially offset the overall growth.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 2,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 3 bullet lines (expected 2-5)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "too short",
+              "insufficient",
+              "not enough"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "business_message",
+      "operation": "translate_hindi",
+      "description": "Business message should be translated to Hindi in Devanagari script",
+      "passed": true,
+      "durationMs": 2449,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "हमें यह सूचित करने में प्रसन्नता है कि आपका आवेदन सफल रहा है। कृपया ऑनबोर्डिंग प्रक्रिया शुरू करने के लिए हमारी एचआर टीम से संपर्क करें। टीम में आपका स्वागत है।",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "[\\u0900-\\u097F]"
+          },
+          "passed": true,
+          "detail": "Output matches /[\\u0900-\\u097F]/"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 50
+          },
+          "passed": true,
+          "detail": "Output is 160 chars (min 50)"
+        }
+      ]
+    },
+    {
+      "id": "technical_documentation",
+      "operation": "translate_hindi",
+      "description": "Technical content with proper nouns should keep proper nouns in original but translate prose",
+      "passed": true,
+      "durationMs": 2543,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "पैकेज इंस्टॉल करने के लिए, अपने टर्मिनल में npm install चलाएं। इंस्टॉलेशन \nआपके इंटरनेट कनेक्शन के आधार पर कुछ मिनट लेगा। पूरा होने के बाद, \nआप npm run dev चलाकर विकास सर्वर शुरू कर सकते हैं।",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "[\\u0900-\\u097F]"
+          },
+          "passed": true,
+          "detail": "Output matches /[\\u0900-\\u097F]/"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 50
+          },
+          "passed": true,
+          "detail": "Output is 191 chars (min 50)"
+        }
+      ]
+    },
+    {
+      "id": "emotional_content",
+      "operation": "translate_hindi",
+      "description": "Personal/emotional content should be translated with natural Hindi phrasing",
+      "passed": true,
+      "durationMs": 2924,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "बीते एक वर्ष में आपने जो कुछ भी किया है, उसके लिए मैं आपका आभार व्यक्त करना चाहता हूँ। कठिन समय में आपका समर्थन अकल्पनीय रूप से अधिक मायने रखता था। मुझे आशा है कि जीवन हमें आगे जहाँ भी ले जाए, हम संपर्क में रहेंगे।",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "[\\u0900-\\u097F]"
+          },
+          "passed": true,
+          "detail": "Output matches /[\\u0900-\\u097F]/"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 214 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "news_paragraph",
+      "operation": "translate_hindi",
+      "description": "News-style writing should retain meaning when translated",
+      "passed": true,
+      "durationMs": 2475,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "भारतीय रिज़र्व बैंक ने आज घोषणा की कि ब्याज दरें लगातार तीसरी तिमाही में ६.५ प्रतिशत पर अपरिवर्तित रहेंगी। यह निर्णय मुद्रास्फीति और मुद्रा स्थिरता के बारे में जारी चिंताओं को दर्शाता है।",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "[\\u0900-\\u097F]"
+          },
+          "passed": true,
+          "detail": "Output matches /[\\u0900-\\u097F]/"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 187 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "short_phrase",
+      "operation": "translate_hindi",
+      "description": "Short phrase should still produce a valid Hindi translation",
+      "passed": true,
+      "durationMs": 2352,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "आपकी सहायता के लिए बहुत-बहुत धन्यवाद। मैं इसकी सचमुच सराहना करता हूँ।",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "[\\u0900-\\u097F]"
+          },
+          "passed": true,
+          "detail": "Output matches /[\\u0900-\\u097F]/"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "too short"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 10
+          },
+          "passed": true,
+          "detail": "Output is 69 chars (min 10)"
+        }
+      ]
+    }
+  ]
+}

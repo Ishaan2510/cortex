@@ -1,0 +1,72 @@
+operation: rewrite_formal
+cases:
+  - id: casual_email_to_formal
+    description: Casual email should become formal — contractions removed, structure improved, meaning preserved
+    input: |
+      hey, just wanted to give you a quick heads up — we're gonna need to push the
+      deadline back by a week. the team's been swamped with the other release and
+      there's no way we'll hit friday. lmk if that's a problem and we can hop on a
+      call to figure something out.
+    checks:
+      - type: must_not_contain
+        terms: ["gonna", "wanna", "lmk", "hop on", "swamped", "heads up"]
+      - type: must_contain
+        terms: ["deadline"]
+      - type: min_length
+        chars: 100
+      - type: max_length
+        chars: 1200
+
+  - id: slang_to_professional
+    description: Slang-heavy input should be reformatted with professional vocabulary
+    input: |
+      The new dashboard is super buggy and the team's pretty frustrated. We've been
+      trying to figure out what's broken but the logs are kinda useless. Can we get
+      someone from infra to take a look? It's blocking a bunch of work and people are
+      starting to complain.
+    checks:
+      - type: must_not_contain
+        terms: ["super", "pretty frustrated", "kinda", "a bunch of", "people are"]
+      - type: must_contain
+        terms: ["dashboard"]
+      - type: min_length
+        chars: 100
+
+  - id: idea_to_proposal
+    description: Casual idea should read like a formal proposal
+    input: |
+      I think we should probably start measuring our LLM costs more carefully. Right
+      now we're just kinda flying blind and the bill came in way higher than expected
+      last month. Maybe we set up some dashboards and have someone own the budget?
+    checks:
+      - type: must_not_contain
+        terms: ["probably", "kinda", "flying blind", "way higher", "maybe"]
+      - type: must_contain
+        terms: ["LLM", "costs"]
+      - type: min_length
+        chars: 100
+
+  - id: technical_casual_to_formal
+    description: Technical content in casual register should retain technical accuracy in formal voice
+    input: |
+      we hit a weird race condition in the worker pool yesterday — looks like two
+      workers grabbed the same job because brpop wasn't actually atomic across our
+      redis cluster setup. fixed it by switching to a single-shard config but we
+      need to think about whether that scales. anyone got thoughts?
+    checks:
+      - type: must_not_contain
+        terms: ["weird", "kinda", "yesterday — looks", "anyone got"]
+      - type: must_contain
+        terms: ["race condition", "Redis"]
+      - type: min_length
+        chars: 150
+
+  - id: short_casual
+    description: Short casual input should still be formalized, not refused
+    input: |
+      can we sync tomorrow? need to chat about q3 stuff.
+    checks:
+      - type: must_not_contain
+        terms: ["can we sync", "chat about", "stuff", "I cannot"]
+      - type: min_length
+        chars: 30

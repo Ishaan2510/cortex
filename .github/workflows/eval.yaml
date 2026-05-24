@@ -15,10 +15,14 @@ on:
       - 'backend/eval/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +38,7 @@ jobs:
         run: npm ci
 
       - name: Run eval
+        id: run_eval
         working-directory: backend
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -41,6 +46,45 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: npm run eval
+        continue-on-error: true
+
+      - name: Find latest report
+        id: find_report
+        if: always()
+        working-directory: backend
+        run: |
+          LATEST=$(ls -t eval/results/*.md 2>/dev/null | head -n 1)
+          if [ -z "$LATEST" ]; then
+            echo "No report found"
+            echo "report_path=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "report_path=$LATEST" >> $GITHUB_OUTPUT
+          echo "Found report: $LATEST"
+
+      - name: Write step summary
+        if: always() && steps.find_report.outputs.report_path != ''
+        working-directory: backend
+        run: |
+          cat "${{ steps.find_report.outputs.report_path }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Read report for PR comment
+        id: read_report
+        if: github.event_name == 'pull_request' && steps.find_report.outputs.report_path != ''
+        working-directory: backend
+        run: |
+          {
+            echo 'report<<REPORT_EOF'
+            cat "${{ steps.find_report.outputs.report_path }}"
+            echo 'REPORT_EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Post PR comment
+        if: github.event_name == 'pull_request' && steps.read_report.outputs.report != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: llm-eval
+          message: ${{ steps.read_report.outputs.report }}
 
       - name: Upload eval results
         if: always()
@@ -49,3 +93,9 @@ jobs:
           name: eval-results
           path: backend/eval/results/
           retention-days: 30
+
+      - name: Fail if eval regressed
+        if: steps.run_eval.outcome == 'failure'
+        run: |
+          echo "Eval detected regressions. See report above."
+          exit 1

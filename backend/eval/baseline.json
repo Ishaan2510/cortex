@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-05-24T14:50:27.479Z",
+  "last_updated": "2026-05-24T16:17:39.293Z",
   "commit": "local",
   "operations": {
     "draft_email": {
@@ -7,12 +7,47 @@
       "passed": 5,
       "total_cases": 5
     },
+    "explain_simply": {
+      "pass_rate": 0.8,
+      "passed": 4,
+      "total_cases": 5
+    },
     "extract_action_items": {
       "pass_rate": 1,
       "passed": 5,
       "total_cases": 5
     },
+    "extract_key_decisions": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "generate_linkedin_post": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "generate_tweet_thread": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "rewrite_casual": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "rewrite_formal": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
     "summarize": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "translate_hindi": {
       "pass_rate": 1,
       "passed": 5,
       "total_cases": 5

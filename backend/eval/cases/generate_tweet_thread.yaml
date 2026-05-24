@@ -1,0 +1,90 @@
+operation: generate_tweet_thread
+cases:
+  - id: career_lessons
+    description: Career advice should be converted into a numbered thread starting with 1/
+    input: |
+      I spent the last two years doing job applications and made every mistake. Here
+      are the lessons: stop optimizing your resume bullets after the first hour, do
+      a Loom demo of your top project instead of writing about it, network through
+      open source not LinkedIn, follow up after rejection (it works), apply to fewer
+      jobs but customize each one heavily, and finally — the project that gets you
+      hired is the one you would have built anyway.
+    checks:
+      - type: regex_match
+        pattern: "1/"
+      - type: regex_match
+        pattern: "2/"
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+      - type: min_length
+        chars: 400
+
+  - id: technical_explainer
+    description: Technical concept should be split into digestible tweets, numbered properly
+    input: |
+      The difference between SQL and NoSQL databases is mostly about tradeoffs.
+      SQL gives you consistency, complex queries, and decades of operational
+      knowledge — but rigid schemas. NoSQL gives you flexibility, easier horizontal
+      scaling, and faster initial development — but you lose transactions and have
+      to think harder about your data access patterns up front.
+    checks:
+      - type: regex_match
+        pattern: "1/"
+      - type: regex_match
+        pattern: "2/"
+      - type: regex_match
+        pattern: "3/"
+      - type: must_contain
+        terms: ["SQL"]
+
+  - id: hot_take
+    description: Opinion thread should have a hook tweet that grabs attention
+    input: |
+      Most engineering blog posts about "scaling" are written by engineers whose
+      products will never reach the scale they're optimizing for. The interesting
+      problems at the startup stage are almost always about clarity, correctness,
+      and shipping speed — not throughput.
+    checks:
+      - type: regex_match
+        pattern: "1/"
+      - type: regex_match
+        pattern: "2/"
+      - type: must_not_contain
+        terms: ["I cannot"]
+      - type: min_length
+        chars: 400
+
+  - id: book_summary
+    description: Book content should be condensed into a thread covering key ideas
+    input: |
+      In Thinking Fast and Slow, Kahneman argues that human cognition operates in
+      two systems. System 1 is fast, automatic, and emotional. System 2 is slow,
+      deliberate, and logical. Most of our decisions are made by System 1, including
+      decisions we believe to be carefully reasoned. The book documents dozens of
+      cognitive biases that emerge from this two-system structure, and discusses
+      what they mean for everything from investing to medical diagnosis to public
+      policy.
+    checks:
+      - type: regex_match
+        pattern: "1/"
+      - type: regex_match
+        pattern: "2/"
+      - type: regex_match
+        pattern: "3/"
+      - type: must_contain
+        terms: ["System"]
+
+  - id: short_input
+    description: Short input should still be expanded into a real thread, not refused
+    input: |
+      Code review changed how I program. Three years of doing them, and now I write
+      code completely differently — for the reader, not the writer.
+    checks:
+      - type: regex_match
+        pattern: "1/"
+      - type: regex_match
+        pattern: "2/"
+      - type: must_not_contain
+        terms: ["I cannot", "too short", "more information"]
+      - type: min_length
+        chars: 300

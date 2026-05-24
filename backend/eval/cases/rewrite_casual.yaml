@@ -1,0 +1,70 @@
+operation: rewrite_casual
+cases:
+  - id: corporate_to_casual
+    description: Stiff corporate message should become warm and conversational
+    input: |
+      Pursuant to our previous correspondence, I am writing to inform you that the
+      project timeline has been revised. The new completion date is scheduled for
+      November 30th. Should you have any concerns regarding this adjustment, please
+      do not hesitate to contact me at your earliest convenience.
+    checks:
+      - type: must_not_contain
+        terms: ["Pursuant", "I am writing to inform", "do not hesitate", "at your earliest convenience"]
+      - type: must_contain
+        terms: ["November"]
+      - type: min_length
+        chars: 80
+
+  - id: legal_to_friendly
+    description: Legal-leaning prose should be made approachable
+    input: |
+      The aforementioned terms of service shall be deemed accepted by the user upon
+      first usage of the platform. All disputes shall be resolved through binding
+      arbitration in the jurisdiction in which the company is incorporated.
+    checks:
+      - type: must_not_contain
+        terms: ["aforementioned", "shall be deemed", "henceforth", "thereto"]
+      - type: must_contain
+        terms: ["terms"]
+      - type: min_length
+        chars: 80
+
+  - id: dense_business_to_casual
+    description: Dense business prose should be more readable and conversational
+    input: |
+      Following the conclusion of our quarterly review, it has been determined that
+      additional resources will be allocated to the customer success function in
+      order to mitigate churn risk. The expansion will encompass three full-time
+      headcount additions and a dedicated tooling budget.
+    checks:
+      - type: must_not_contain
+        terms: ["Following the conclusion", "it has been determined", "encompass"]
+      - type: must_contain
+        terms: ["customer success"]
+      - type: min_length
+        chars: 100
+
+  - id: technical_formal_to_casual
+    description: Formal technical writeup should become readable to a peer
+    input: |
+      The implementation utilizes a hierarchical sparse attention mechanism in
+      conjunction with rotary position embeddings to achieve sub-quadratic scaling
+      while maintaining performance parity with full-attention baselines on
+      long-context benchmarks.
+    checks:
+      - type: must_not_contain
+        terms: ["utilizes", "in conjunction with", "performance parity"]
+      - type: must_contain
+        terms: ["attention"]
+      - type: min_length
+        chars: 100
+
+  - id: terse_formal_to_warm
+    description: Terse formal message should become genuinely warm without losing the point
+    input: |
+      Request denied. Please resubmit with proper documentation.
+    checks:
+      - type: must_not_contain
+        terms: ["I cannot", "as an AI"]
+      - type: min_length
+        chars: 40
