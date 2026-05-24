@@ -1,0 +1,106 @@
+operation: summarize
+cases:
+  - id: news_article
+    description: Standard news article should produce 3-5 bullet points with key entities preserved
+    input: |
+      OpenAI announced on Wednesday that GPT-5 will launch in early 2026, marking the
+      first major model release from the company in over a year. The new model is
+      reported to be significantly more capable at coding, mathematical reasoning, and
+      multi-step planning tasks compared to GPT-4. Industry analysts at Morgan Stanley
+      expect the release to intensify the competitive pressure on Anthropic, which
+      released Claude 4 in May 2025, and Google, whose Gemini 2.5 family launched in
+      March. OpenAI did not disclose pricing for the new model but indicated it would
+      be available through both the consumer ChatGPT product and the API. The
+      announcement came alongside the news that the company had crossed $5 billion in
+      annual recurring revenue.
+    checks:
+      - type: format_bullets
+        min: 3
+        max: 5
+      - type: must_contain
+        terms: [GPT-5, OpenAI]
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry", "as an AI", "language model"]
+      - type: max_length
+        chars: 1200
+
+  - id: technical_abstract
+    description: Dense technical content should compress without losing core concepts
+    input: |
+      We propose a novel attention mechanism that reduces the quadratic complexity of
+      standard transformers to O(n log n) using a hierarchical sparse pattern. Our
+      approach decomposes the attention matrix into a hierarchy of blocks, computing
+      dense attention within local windows and sparse attention across distant tokens
+      via learned routing. Empirically, we evaluate on long-context language modeling
+      benchmarks including PG-19 and arXiv abstracts. Our model achieves perplexity
+      within 0.3 of full attention while using 4.2x less memory at sequence length
+      16384. We further demonstrate that the routing patterns learned by our model
+      exhibit interpretable structure aligned with linguistic phenomena such as
+      coreference and topic boundaries.
+    checks:
+      - type: format_bullets
+        min: 3
+        max: 5
+      - type: must_contain
+        terms: [attention, complexity]
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+      - type: min_length
+        chars: 200
+
+  - id: meeting_notes
+    description: Unstructured meeting notes should be summarized with clear key takeaways
+    input: |
+      Q3 strategy meeting notes — attendees: Priya (PM), Marcus (Eng Lead), Sara (Design),
+      David (Marketing). Marcus opened by reviewing Q2 delivery — we shipped 14 of 18
+      planned features, with the mobile app overhaul slipping to Q3 due to design rework.
+      Sara walked through the new design system, which is now adopted across 80% of
+      product surfaces. Priya raised concern about the API rate limiting affecting
+      enterprise customers — we agreed to bump the limit for paid tiers in the next
+      sprint. David presented the campaign results from the spring launch: 32% increase
+      in qualified leads, but conversion-to-paid dropped 4 points. We agreed marketing
+      and product need a joint review of onboarding next week. Next Q4 planning starts
+      September 15.
+    checks:
+      - type: format_bullets
+        min: 3
+        max: 5
+      - type: must_contain
+        terms: [Q3]
+      - type: max_length
+        chars: 1500
+
+  - id: narrative_text
+    description: Story-style input should be summarized factually, not retold
+    input: |
+      The hike to Triund had started easy enough. We left McLeodganj at 6 AM, the
+      mountain air still cold, expecting to summit by noon. By 9 AM the trail had
+      narrowed and the temperature dropped sharply. Snow patches appeared by 10 AM.
+      Two of our group, unprepared for the cold, turned back at the second checkpoint
+      around 10:30. The remaining four continued, but at the false summit we hit a
+      whiteout — visibility under 10 meters. We made the call to descend immediately.
+      The descent took four hours instead of the usual two because of the icy patches
+      forming on the lower trail. We reached McLeodganj at 4:30 PM, all safe but
+      thoroughly exhausted. The lesson: even in May, the Dhauladhars demand respect.
+    checks:
+      - type: format_bullets
+        min: 3
+        max: 5
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+      - type: min_length
+        chars: 150
+      - type: max_length
+        chars: 1500
+
+  - id: short_input
+    description: Very short input is still expected to produce valid bullet output, not refuse
+    input: |
+      The Q2 results showed revenue up 18% year-over-year, with strong growth in the
+      enterprise segment offset by softness in SMB renewals.
+    checks:
+      - type: format_bullets
+        min: 2
+        max: 5
+      - type: must_not_contain
+        terms: ["I cannot", "too short", "insufficient", "not enough"]

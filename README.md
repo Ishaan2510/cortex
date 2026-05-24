@@ -38,6 +38,27 @@ Each task selects a provider chain based on three signals — the operation, the
 
 Rate-limit detection looks for `429`, `rate limit`, `quota`, `resource_exhausted`, or `too many` in the exception message, advances to the next provider on a hit, and logs at warn level. Any other exception also triggers fallback but logs at error level. If the entire chain fails the task is marked `failed` and the full chain is persisted for diagnostics.
 
+## Prompt Regression Testing
+
+Every change to a system prompt or to the LLM router triggers an automated eval
+that scores the output against a versioned set of test cases. The eval lives in
+`backend/eval/` and runs on every PR via GitHub Actions.
+
+Each case declares an input, the operation to run, and a list of structural
+checks the output must pass — bullet count, required terms, forbidden terms,
+length bounds, and regex matches. The runner calls the real LLM router (with
+the full fallback chain), scores each case, and aggregates per-operation pass
+rates.
+
+If any operation's pass rate drops more than 5 percentage points below the
+committed baseline, CI fails the build. Baseline updates are explicit —
+`npm run eval -- --update-baseline` — so accepted regressions require a
+deliberate commit.
+
+The 5-point threshold is wide enough to absorb LLM nondeterminism (cases that
+flicker pass/fail run-to-run at temperature 0.7) but narrow enough to catch
+genuine prompt regressions.
+
 ---
 
 ## Live Demo Screenshots

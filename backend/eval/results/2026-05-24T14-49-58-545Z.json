@@ -1,0 +1,797 @@
+{
+  "timestamp": "2026-05-24T14:49:58.545Z",
+  "commit": "local",
+  "regression_threshold_pp": 5,
+  "operations": {
+    "draft_email": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "extract_action_items": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "summarize": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    }
+  },
+  "regressions": [],
+  "cases": [
+    {
+      "id": "business_followup",
+      "operation": "draft_email",
+      "description": "Standard business follow-up should produce a complete email with subject, greeting, body, sign-off",
+      "passed": true,
+      "durationMs": 1724,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Follow-up on Integration Discussion\n\nDear Anjali,\n\nI hope this email finds you well. I am writing to follow up on our integration discussion last Tuesday. As we approach the end of the week, I wanted to confirm the scope of the proposal you requested. Specifically, I would like to clarify whether your team would like us to handle webhook retry logic on our side or if you would prefer to manage it on your end.\n\nPlease let me know your preference so I can ensure the proposal accurately reflects your requirements.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Anjali"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 552 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 552 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "polite_decline",
+      "operation": "draft_email",
+      "description": "Declining an offer professionally should be polite but clear",
+      "passed": true,
+      "durationMs": 588,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Declining Interview Invitation for Acme Corp Opportunity\n\nDear Recruiter,\n\nI appreciate the invitation to interview for the role at Acme Corp and am grateful for the time you took to consider me for this opportunity. However, I have recently accepted another position that aligns with my current career goals. Although I am excited about this new path, I am impressed by Acme Corp's mission and would like to keep the door open for potential future opportunities.\n\nThank you again for reaching out, and I wish the team all the best in finding the right candidate for the position.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot help",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 616 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1200
+          },
+          "passed": true,
+          "detail": "Output is 616 chars (max 1200)"
+        }
+      ]
+    },
+    {
+      "id": "intro_outreach",
+      "operation": "draft_email",
+      "description": "Cold intro email should have hook, value, and clear ask",
+      "passed": true,
+      "durationMs": 713,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Exploring Opportunities for AI Collaboration and Feedback\n\nDear Sarah Chen,\n\nI came across your background in product management, particularly your experience working on collaborative editing systems at Notion. Your expertise in this area aligns with the work we're doing at Cortex, where we're developing a multi-provider LLM orchestration platform.\n\nI'd love to discuss our routing model with you and gain your insights, given your unique perspective on collaboration and system design. Would you be available for a 15-minute call to provide feedback and help us refine our approach?\n\nI look forward to the opportunity to speak with you and learn from your experiences.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Sarah"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot write",
+              "as an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 250
+          },
+          "passed": true,
+          "detail": "Output is 707 chars (min 250)"
+        }
+      ]
+    },
+    {
+      "id": "thank_you",
+      "operation": "draft_email",
+      "description": "Thank-you email after an interview should be specific and warm but professional",
+      "passed": true,
+      "durationMs": 821,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Thank you for the opportunity to interview at Stripe\n\nDear David Park,\n\nI wanted to take a moment to express my sincere gratitude for the opportunity to interview for the role at Stripe. I truly appreciated the time you took to speak with me and share your insights on distributed systems patterns. Your perspective on idempotency in payment workflows was particularly thought-provoking and has given me a lot to consider.\n\nI was impressed by the company culture and the team's passion for innovation, and our conversation only reinforced my interest in the position. I am excited about the prospect of contributing to Stripe's mission and working with such a talented team.\n\nOnce again, thank you for your time and consideration. I look forward to the next steps in the process.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "David"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 815 chars (min 150)"
+        }
+      ]
+    },
+    {
+      "id": "apology",
+      "operation": "draft_email",
+      "description": "Apology email should acknowledge the issue, take responsibility, propose a fix",
+      "passed": true,
+      "durationMs": 612,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "Subject: Missed Quarterly Metrics Report for Board Meeting\n\nDear [CEO's Name],\n\nI am writing to acknowledge that I missed the deadline for submitting the quarterly metrics report, which was due yesterday for our board meeting. I apologize for any inconvenience this may have caused and appreciate your inquiry regarding the status of the report.\n\nUnfortunately, I encountered unexpected data access issues that blocked my progress for two days, hindering my ability to complete the report on time. I am now working diligently to finalize the report and am committed to delivering it to you by Friday, end of day.\n\nPlease let me know if this revised timeline meets your expectations, and if there's anything else I can provide in the interim. I appreciate your understanding and look forward to submitting the completed report soon.\n\nBest regards,\n[Your Name]",
+      "checks": [
+        {
+          "type": "regex_match",
+          "config": {
+            "type": "regex_match",
+            "pattern": "^Subject:",
+            "flags": "m"
+          },
+          "passed": true,
+          "detail": "Output matches /^Subject:/m"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm just an AI"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 858 chars (min 200)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 858 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "project_meeting",
+      "operation": "extract_action_items",
+      "description": "Standard project meeting should yield action items with owners where mentioned",
+      "passed": true,
+      "durationMs": 513,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Draft Q3 roadmap doc — Priya\n[ ] Share Q3 roadmap doc with Marcus for engineering input — Priya\n[ ] Coordinate with the platform team on the auth refactor — Marcus\n[ ] Decide on using Auth0 or Clerk by end of next week — Marcus\n[ ] Escalate dark mode palette approval to Anjali — David\n[ ] Approve the dark mode palette — Anjali\n[ ] Own the customer interview synthesis — Priya\n[ ] Attend next sync on Thursday 3pm",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Priya",
+              "Marcus"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "no action items"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 100
+          },
+          "passed": true,
+          "detail": "Output is 418 chars (min 100)"
+        }
+      ]
+    },
+    {
+      "id": "email_thread",
+      "operation": "extract_action_items",
+      "description": "Email thread should yield discrete action items, not a summary paragraph",
+      "passed": true,
+      "durationMs": 8503,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Have new flow mockups ready by Wednesday — Sara\n[ ] Review mockups by Friday — Marcus\n[ ] Review mockups by Friday — Priya\n[ ] Pull the latest funnel numbers from last quarter — David\n[ ] Book the kickoff meeting for Monday afternoon — Anjali Mehta\n[ ] Confirm availability for the kickoff meeting — team@cortex.ai",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Sara",
+              "David"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I'm sorry",
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "mixed_content",
+      "operation": "extract_action_items",
+      "description": "Mixed discussion + actions should extract only the actionable items",
+      "passed": true,
+      "durationMs": 185,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Set up a triage rotation starting next sprint — Marcus\n[ ] Update the engineering handbook with the new SLA by Friday — Priya\n[ ] Announce the new SLA in #eng — Priya",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Marcus",
+              "Priya"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    },
+    {
+      "id": "no_action_items",
+      "operation": "extract_action_items",
+      "description": "Input with no clear actions should produce empty or near-empty output, not hallucinate items",
+      "passed": true,
+      "durationMs": 262,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* [ ] Follow up on keynote speaker's research on AI infrastructure trends \n* [ ] Investigate the sustainability of the current investment pace in AI infrastructure \n* [ ] Research smaller specialized models versus frontier models",
+      "checks": [
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 600
+          },
+          "passed": true,
+          "detail": "Output is 229 chars (max 600)"
+        }
+      ]
+    },
+    {
+      "id": "casual_message",
+      "operation": "extract_action_items",
+      "description": "Casual messaging-style input with implicit actions should be parsed correctly",
+      "passed": true,
+      "durationMs": 196,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "[ ] Grab coffee with the new contractor to walk through the codebase \n[ ] Ping the architecture diagrams before EOD — Raj\n[ ] Revoke the old vendor's access — Marcus",
+      "checks": [
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "[ ]"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 80
+          },
+          "passed": true,
+          "detail": "Output is 165 chars (min 80)"
+        }
+      ]
+    },
+    {
+      "id": "news_article",
+      "operation": "summarize",
+      "description": "Standard news article should produce 3-5 bullet points with key entities preserved",
+      "passed": true,
+      "durationMs": 536,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* OpenAI will launch GPT-5 in early 2026, its first major model release in over a year, with improved capabilities in coding, mathematical reasoning, and multi-step planning tasks.\n* The release is expected to increase competitive pressure on Anthropic and Google, which have recently released their own models, Claude 4 and Gemini 2.5, respectively.\n* GPT-5 will be available through both the consumer ChatGPT product and the API, although pricing details have not been disclosed.\n* The announcement coincides with OpenAI reaching $5 billion in annual recurring revenue.\n* The launch of GPT-5 is expected to significantly impact the market, with industry analysts at Morgan Stanley already weighing in on its potential effects.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 5 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "GPT-5",
+              "OpenAI"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry",
+              "as an AI",
+              "language model"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1200
+          },
+          "passed": true,
+          "detail": "Output is 728 chars (max 1200)"
+        }
+      ]
+    },
+    {
+      "id": "technical_abstract",
+      "operation": "summarize",
+      "description": "Dense technical content should compress without losing core concepts",
+      "passed": true,
+      "durationMs": 309,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* The proposed attention mechanism reduces the complexity of standard transformers from quadratic to O(n log n) using a hierarchical sparse pattern.\n* The approach decomposes the attention matrix into a hierarchy of blocks, computing dense attention locally and sparse attention across distant tokens via learned routing.\n* The model achieves perplexity close to full attention while using significantly less memory, and the learned routing patterns exhibit interpretable structure aligned with linguistic phenomena.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 3 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "attention",
+              "complexity"
+            ]
+          },
+          "passed": true,
+          "detail": "All 2 required terms present"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 200
+          },
+          "passed": true,
+          "detail": "Output is 516 chars (min 200)"
+        }
+      ]
+    },
+    {
+      "id": "meeting_notes",
+      "operation": "summarize",
+      "description": "Unstructured meeting notes should be summarized with clear key takeaways",
+      "passed": true,
+      "durationMs": 530,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* Q2 delivery: 14 of 18 planned features were shipped, with the mobile app overhaul delayed to Q3 due to design rework.\n* Key design and product updates: a new design system is now adopted across 80% of product surfaces, and API rate limits will be increased for paid tiers in the next sprint.\n* Marketing campaign results: a 32% increase in qualified leads, but a 4-point drop in conversion-to-paid rates, prompting a joint review of onboarding next week.\n* Next planning cycle: Q4 planning will commence on September 15.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 4 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_contain",
+          "config": {
+            "type": "must_contain",
+            "terms": [
+              "Q3"
+            ]
+          },
+          "passed": true,
+          "detail": "All 1 required terms present"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 522 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "narrative_text",
+      "operation": "summarize",
+      "description": "Story-style input should be summarized factually, not retold",
+      "passed": true,
+      "durationMs": 512,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* A group of hikers started their trek to Triund at 6 AM, expecting to summit by noon, but encountered cold temperatures and snow patches by 10 AM.\n* Two members of the group turned back due to being unprepared for the cold, while the remaining four continued but were forced to descend due to a whiteout at the false summit.\n* The group safely returned to McLeodganj at 4:30 PM, exhausted, after a four-hour descent made difficult by icy patches on the lower trail.\n* The experience served as a lesson that the Dhauladhars mountain range demands respect, even in May, due to its unpredictable and challenging weather conditions.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 3,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 4 bullet lines (expected 3-5)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "I'm sorry"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        },
+        {
+          "type": "min_length",
+          "config": {
+            "type": "min_length",
+            "chars": 150
+          },
+          "passed": true,
+          "detail": "Output is 629 chars (min 150)"
+        },
+        {
+          "type": "max_length",
+          "config": {
+            "type": "max_length",
+            "chars": 1500
+          },
+          "passed": true,
+          "detail": "Output is 629 chars (max 1500)"
+        }
+      ]
+    },
+    {
+      "id": "short_input",
+      "operation": "summarize",
+      "description": "Very short input is still expected to produce valid bullet output, not refuse",
+      "passed": true,
+      "durationMs": 200,
+      "providerChain": [
+        "groq"
+      ],
+      "providerUsed": "groq",
+      "output": "* Revenue increased by 18% year-over-year in Q2.\n* The enterprise segment experienced strong growth.\n* The SMB segment saw softness in renewals, offsetting some of the enterprise growth.",
+      "checks": [
+        {
+          "type": "format_bullets",
+          "config": {
+            "type": "format_bullets",
+            "min": 2,
+            "max": 5
+          },
+          "passed": true,
+          "detail": "Found 3 bullet lines (expected 2-5)"
+        },
+        {
+          "type": "must_not_contain",
+          "config": {
+            "type": "must_not_contain",
+            "terms": [
+              "I cannot",
+              "too short",
+              "insufficient",
+              "not enough"
+            ]
+          },
+          "passed": true,
+          "detail": "No forbidden terms present"
+        }
+      ]
+    }
+  ]
+}

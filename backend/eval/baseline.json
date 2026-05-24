@@ -1,0 +1,21 @@
+{
+  "last_updated": "2026-05-24T14:50:27.479Z",
+  "commit": "local",
+  "operations": {
+    "draft_email": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "extract_action_items": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    },
+    "summarize": {
+      "pass_rate": 1,
+      "passed": 5,
+      "total_cases": 5
+    }
+  }
+}

@@ -1,0 +1,90 @@
+operation: extract_action_items
+cases:
+  - id: project_meeting
+    description: Standard project meeting should yield action items with owners where mentioned
+    input: |
+      Sync notes, May 15. Priya will draft the Q3 roadmap doc by Friday and share with
+      Marcus for engineering input. Marcus to coordinate with the platform team on the
+      auth refactor — needs a decision by end of next week on whether to use Auth0 or
+      Clerk. Sara is blocked on the new design tokens until product approves the dark
+      mode palette; David to escalate this to Anjali by EOD today. We also need someone
+      to own the customer interview synthesis — Priya volunteered to take this on after
+      the roadmap is shipped. Next sync is Thursday 3pm.
+    checks:
+      - type: must_contain
+        terms: ["[ ]"]
+      - type: must_contain
+        terms: [Priya, Marcus]
+      - type: must_not_contain
+        terms: ["I cannot", "no action items"]
+      - type: min_length
+        chars: 100
+
+  - id: email_thread
+    description: Email thread should yield discrete action items, not a summary paragraph
+    input: |
+      From: Anjali Mehta
+      To: team@cortex.ai
+      Subject: Re: Onboarding revamp
+
+      Thanks all. Based on yesterday's discussion: Sara, can you have the new flow
+      mockups ready by Wednesday? I'd like Marcus and Priya to review them by Friday
+      so we can scope engineering effort early next week. David, please pull the
+      latest funnel numbers from last quarter — we'll need them for the kickoff deck.
+      I'll book the kickoff meeting for Monday afternoon once everyone's confirmed
+      availability. Let me know if any of these deadlines are unrealistic.
+    checks:
+      - type: must_contain
+        terms: ["[ ]"]
+      - type: must_contain
+        terms: [Sara, David]
+      - type: must_not_contain
+        terms: ["I'm sorry", "I cannot"]
+
+  - id: mixed_content
+    description: Mixed discussion + actions should extract only the actionable items
+    input: |
+      Engineering retrospective — Q2. Velocity was up 22% vs Q1 which is great. The
+      main pain point we identified was the lack of clear ownership on cross-team
+      bugs — they often sat untriaged for days. Action: Marcus to set up a triage
+      rotation starting next sprint. Code review turnaround was another concern;
+      median time-to-first-review was 28 hours. Sara suggested we adopt a 24-hour
+      SLA, and the team agreed. Action: Priya to update the engineering handbook with
+      the new SLA by Friday and announce in #eng. The CI flakiness issue from Q1 is
+      now resolved after the parallelization work.
+    checks:
+      - type: must_contain
+        terms: ["[ ]"]
+      - type: must_contain
+        terms: [Marcus, Priya]
+      - type: must_not_contain
+        terms: ["I cannot"]
+
+  - id: no_action_items
+    description: Input with no clear actions should produce empty or near-empty output, not hallucinate items
+    input: |
+      Just wanted to share some thoughts on the recent industry conference. The
+      keynote on AI infrastructure was interesting — particularly the trends around
+      smaller specialized models versus the continued scaling of frontier models.
+      A lot of the side conversations centered on whether the current investment
+      pace is sustainable. The food was decent and the venue was pleasant.
+    checks:
+      - type: must_not_contain
+        terms: ["I cannot"]
+      - type: max_length
+        chars: 600
+
+  - id: casual_message
+    description: Casual messaging-style input with implicit actions should be parsed correctly
+    input: |
+      hey team — i'll grab coffee with the new contractor tomorrow morning to walk
+      through the codebase. raj, can you ping me the architecture diagrams before
+      eod so i can include them? also someone needs to revoke the old vendor's
+      access — i think that's on you marcus? lmk if not.
+    checks:
+      - type: must_contain
+        terms: ["[ ]"]
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry"]
+      - type: min_length
+        chars: 80

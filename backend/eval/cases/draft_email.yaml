@@ -1,0 +1,92 @@
+operation: draft_email
+cases:
+  - id: business_followup
+    description: Standard business follow-up should produce a complete email with subject, greeting, body, sign-off
+    input: |
+      Need to follow up with Anjali at Stripe about the integration discussion we had
+      last Tuesday. She asked for a proposal by end of this week, and I want to confirm
+      the scope before I write it up. Specifically I need to check whether they want us
+      to handle webhook retry logic on our side or theirs.
+    checks:
+      - type: regex_match
+        pattern: "^Subject:"
+        flags: "m"
+      - type: must_contain
+        terms: [Anjali]
+      - type: must_not_contain
+        terms: ["I cannot", "I'm sorry", "as an AI"]
+      - type: min_length
+        chars: 200
+      - type: max_length
+        chars: 1500
+
+  - id: polite_decline
+    description: Declining an offer professionally should be polite but clear
+    input: |
+      Reply to the recruiter from Acme Corp declining their interview invitation. I
+      appreciate the outreach but I've just accepted another role and want to keep
+      the door open for the future without being misleading about my current status.
+    checks:
+      - type: regex_match
+        pattern: "^Subject:"
+        flags: "m"
+      - type: must_not_contain
+        terms: ["I cannot help", "as an AI"]
+      - type: min_length
+        chars: 200
+      - type: max_length
+        chars: 1200
+
+  - id: intro_outreach
+    description: Cold intro email should have hook, value, and clear ask
+    input: |
+      Write a cold intro email to Sarah Chen, a product manager at Notion who
+      previously worked on collaborative editing systems. I'm building Cortex, a
+      multi-provider LLM orchestration platform, and I'd love 15 minutes of her time
+      to get feedback on our routing model. We have no mutual connections.
+    checks:
+      - type: regex_match
+        pattern: "^Subject:"
+        flags: "m"
+      - type: must_contain
+        terms: [Sarah]
+      - type: must_not_contain
+        terms: ["I cannot write", "as an AI"]
+      - type: min_length
+        chars: 250
+
+  - id: thank_you
+    description: Thank-you email after an interview should be specific and warm but professional
+    input: |
+      Send a thank-you note after my technical interview with David Park at Stripe.
+      We discussed distributed systems patterns and he gave me a really thoughtful
+      perspective on idempotency in payment workflows. Want to reinforce my interest
+      in the role.
+    checks:
+      - type: regex_match
+        pattern: "^Subject:"
+        flags: "m"
+      - type: must_contain
+        terms: [David]
+      - type: must_not_contain
+        terms: ["I cannot"]
+      - type: min_length
+        chars: 150
+
+  - id: apology
+    description: Apology email should acknowledge the issue, take responsibility, propose a fix
+    input: |
+      I missed a key deliverable yesterday — the quarterly metrics report that was
+      due for our board meeting. The CEO is asking why. Need to send her an email
+      acknowledging the miss, explaining briefly (I was blocked on data access
+      issues for two days), and committing to a new delivery date of Friday EOD.
+    checks:
+      - type: regex_match
+        pattern: "^Subject:"
+        flags: "m"
+      - type: must_not_contain
+        terms: ["I cannot", "I'm just an AI"]
+      - type: min_length
+        chars: 200
+      - type: max_length
+        chars: 1500
