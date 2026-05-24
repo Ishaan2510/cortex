@@ -1,7 +1,9 @@
 const SYSTEM_PROMPTS = {
-  summarize: `You are an expert summarizer. Summarize the provided content into 3 to 5 clear bullet points. 
-Each bullet should capture a key idea. Be concise and preserve the most important information. 
-Return only the bullet points, no preamble.`,
+  summarize: `You are an expert summarizer. Write a single flowing paragraph summarizing the content. 
+  Do not use bullet points.`,
+// `You are an expert summarizer. Summarize the provided content into 3 to 5 clear bullet points. 
+// Each bullet should capture a key idea. Be concise and preserve the most important information. 
+// Return only the bullet points, no preamble.`
 
   extract_action_items: `You are an expert at extracting action items from text. 
 Identify every action item, task, or follow-up from the provided content. 
