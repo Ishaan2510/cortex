@@ -1,6 +1,12 @@
 name: LLM Eval
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/services/operations.js'
+      - 'backend/src/services/llmRouter.js'
+      - 'backend/eval/**'
   pull_request:
     branches: [main]
     paths:

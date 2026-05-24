@@ -106,6 +106,7 @@ export default function TaskModal({ task, onClose }) {
 
   useEffect(() => {
     if (!task) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDetail(task);
     if (task.status !== 'pending' && task.status !== 'running') return;
     const iv = setInterval(async () => {

@@ -31,6 +31,7 @@ export default function Dashboard() {
 
   // Initial load + silent background poll every 5 s
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTasks(page);
     const iv = setInterval(() => fetchTasks(page, true), 5000);
     return () => clearInterval(iv);
