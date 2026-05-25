@@ -4,10 +4,14 @@
  * beyond the configured threshold.
  *
  * Usage:
- *   node eval/runner.js                  # normal run, regression check enforced
+ *   node eval/runner.js                  # full run, regression check enforced
  *   node eval/runner.js --update-baseline  # save current results as new baseline
+ *   node eval/runner.js --smoke          # one case per operation only (CI mode)
  *
- * Env vars required: GROQ_API_KEY, CEREBRAS_API_KEY, GOOGLE_API_KEY, OPENROUTER_API_KEY
+ * Env vars:
+ *   GROQ_API_KEY, CEREBRAS_API_KEY, GOOGLE_API_KEY, OPENROUTER_API_KEY (required)
+ *   EVAL_DELAY_MS — sleep this many ms between cases (default 0). Useful in CI
+ *                   to avoid Gemini's 5 RPM / 20 RPD free-tier ceiling.
  */
 
 const fs = require('fs');
@@ -24,8 +28,11 @@ const REGRESSION_THRESHOLD_PP = 5; // percentage points
 const CASES_DIR = path.join(__dirname, 'cases');
 const RESULTS_DIR = path.join(__dirname, 'results');
 const BASELINE_PATH = path.join(__dirname, 'baseline.json');
+const DELAY_MS = parseInt(process.env.EVAL_DELAY_MS || '0', 10);
 
-function loadCases() {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function loadCases({ smoke = false } = {}) {
   const files = fs.readdirSync(CASES_DIR).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   const allCases = [];
   for (const file of files) {
@@ -35,7 +42,9 @@ function loadCases() {
       console.warn(`Skipping ${file}: must have 'operation' and 'cases' fields`);
       continue;
     }
-    for (const c of parsed.cases) {
+    // In smoke mode, take only the first case per operation
+    const casesToInclude = smoke ? parsed.cases.slice(0, 1) : parsed.cases;
+    for (const c of casesToInclude) {
       allCases.push({ ...c, operation: parsed.operation, file });
     }
   }
@@ -117,8 +126,11 @@ function loadBaseline() {
   }
 }
 
-function checkRegressions(current, baseline) {
+function checkRegressions(current, baseline, smoke) {
   if (!baseline) return { regressions: [], firstRun: true };
+  // Smoke mode has too few cases per operation (1) for the regression threshold
+  // to be meaningful — pass rates can only be 0% or 100%. Skip threshold check.
+  if (smoke) return { regressions: [], firstRun: false };
   const regressions = [];
   for (const [op, currentStats] of Object.entries(current)) {
     const baselineStats = baseline.operations?.[op];
@@ -139,15 +151,20 @@ function checkRegressions(current, baseline) {
 async function main() {
   const args = process.argv.slice(2);
   const updateBaseline = args.includes('--update-baseline');
+  const smoke = args.includes('--smoke');
 
   if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
 
-  const cases = loadCases();
+  const cases = loadCases({ smoke });
   if (cases.length === 0) {
     console.error('No eval cases found.');
     process.exit(1);
   }
-  console.log(`Loaded ${cases.length} cases across ${new Set(cases.map((c) => c.operation)).size} operations`);
+  console.log(
+    `Loaded ${cases.length} cases across ${new Set(cases.map((c) => c.operation)).size} operations` +
+    (smoke ? ' (smoke mode: 1 case per operation)' : '') +
+    (DELAY_MS > 0 ? ` with ${DELAY_MS}ms delay between cases` : '')
+  );
 
   const results = [];
   for (let i = 0; i < cases.length; i++) {
@@ -156,16 +173,20 @@ async function main() {
     const result = await runCase(c);
     results.push(result);
     console.log(result.passed ? 'PASS' : `FAIL${result.error ? ` (${result.error})` : ''}`);
+    if (DELAY_MS > 0 && i < cases.length - 1) {
+      await sleep(DELAY_MS);
+    }
   }
 
   const operations = aggregate(results);
   const baseline = loadBaseline();
-  const { regressions, firstRun } = checkRegressions(operations, baseline);
+  const { regressions, firstRun } = checkRegressions(operations, baseline, smoke);
 
   const timestamp = new Date().toISOString();
   const reportData = {
     timestamp,
     commit: process.env.GITHUB_SHA || 'local',
+    smoke,
     regression_threshold_pp: REGRESSION_THRESHOLD_PP,
     operations,
     regressions,
@@ -190,6 +211,10 @@ async function main() {
   console.log(`\nReport: ${mdPath}`);
 
   if (updateBaseline) {
+    if (smoke) {
+      console.error('Cannot update baseline in smoke mode (insufficient cases). Run without --smoke.');
+      process.exit(1);
+    }
     const newBaseline = {
       last_updated: timestamp,
       commit: reportData.commit,
@@ -202,6 +227,22 @@ async function main() {
 
   if (firstRun) {
     console.log('\nNo baseline found. Run with --update-baseline to create one.');
+    process.exit(0);
+  }
+
+  if (smoke) {
+    // Smoke mode fails only if a case crashed (provider chain fully exhausted).
+    // 1 case per op is too noisy for the regression threshold, so check failures
+    // are not treated as CI-blocking.
+    const crashes = results.filter((r) => r.error);
+    if (crashes.length > 0) {
+      console.error(`\nFAILED: ${crashes.length} case(s) crashed (all providers in chain failed):`);
+      for (const c of crashes) {
+        console.error(`  ${c.operation} / ${c.id}: ${c.error}`);
+      }
+      process.exit(1);
+    }
+    console.log('\nSmoke mode: all cases completed without provider chain exhaustion. PASSED.');
     process.exit(0);
   }
 

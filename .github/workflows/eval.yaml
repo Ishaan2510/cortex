@@ -14,6 +14,15 @@ on:
       - 'backend/src/services/llmRouter.js'
       - 'backend/eval/**'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Eval mode: smoke (10 cases, fast) or full (50 cases, slow)'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - full
 
 permissions:
   contents: read
@@ -22,7 +31,7 @@ permissions:
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
 
@@ -37,14 +46,29 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Run eval
+      - name: Run eval (smoke mode)
         id: run_eval
+        if: github.event_name != 'workflow_dispatch' || inputs.mode == 'smoke'
         working-directory: backend
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          EVAL_DELAY_MS: '13000'
+        run: npm run eval -- --smoke
+        continue-on-error: true
+
+      - name: Run eval (full mode, manual dispatch only)
+        id: run_eval_full
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'full'
+        working-directory: backend
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          EVAL_DELAY_MS: '13000'
         run: npm run eval
         continue-on-error: true
 
@@ -95,7 +119,7 @@ jobs:
           retention-days: 30
 
       - name: Fail if eval regressed
-        if: steps.run_eval.outcome == 'failure'
+        if: steps.run_eval.outcome == 'failure' || steps.run_eval_full.outcome == 'failure'
         run: |
-          echo "Eval detected regressions. See report above."
+          echo "Eval detected regressions or crashes. See report above."
           exit 1

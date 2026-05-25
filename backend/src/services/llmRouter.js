@@ -17,6 +17,7 @@ function getProviderChain(operation, inputLength, hasImage) {
   if (inputLength > LONG_THRESHOLD) {
     return [Provider.GEMINI, Provider.CEREBRAS, Provider.OPENROUTER];
   }
+  // return [Provider.CEREBRAS, Provider.GEMINI, Provider.OPENROUTER];
   return [Provider.GROQ, Provider.CEREBRAS, Provider.GEMINI, Provider.OPENROUTER];
 }
 
@@ -37,7 +38,7 @@ async function callGroq(systemPrompt, userMessage) {
 async function callCerebras(systemPrompt, userMessage) {
   const client = new Cerebras({ apiKey: process.env.CEREBRAS_API_KEY });
   const r = await client.chat.completions.create({
-    model: 'llama-3.3-70b',
+    model: 'gpt-oss-120b',  // confirmed available via /v1/models on this account
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
@@ -49,45 +50,30 @@ async function callCerebras(systemPrompt, userMessage) {
 }
 
 async function callGemini(systemPrompt, userMessage, imageData = null) {
-  const ai = new GoogleGenAI({
-    apiKey: process.env.GOOGLE_API_KEY,
-  });
-
-  try {
-    const parts = [];
-
-    if (imageData) {
-      parts.push({
-        inlineData: {
-          mimeType: imageData.mimeType,
-          data: imageData.data.toString('base64'),
-        },
-      });
-    }
-
-    parts.push({ text: userMessage });
-
-    const r = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [{ role: 'user', parts }],
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.7,
-        maxOutputTokens: 2048,
+  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+  const parts = [];
+  if (imageData) {
+    parts.push({
+      inlineData: {
+        mimeType: imageData.mimeType,
+        data: imageData.data.toString('base64'),
       },
     });
-
-    return r.text;
-  } catch (err) {
-    console.error('GEMINI RAW ERROR:', err);
-
-    if (err.response) {
-      console.error('STATUS:', err.response.status);
-      console.error('BODY:', err.response.data);
-    }
-
-    throw err;
   }
+  parts.push({ text: userMessage });
+
+  // gemini-2.0-flash is auto-aliased to 2.5-flash by Google; we name 2.5 directly
+  // so the model used matches the quota the error messages refer to.
+  const r = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ role: 'user', parts }],
+    config: {
+      systemInstruction: systemPrompt,
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+    },
+  });
+  return r.text;
 }
 
 async function callOpenRouter(systemPrompt, userMessage) {
