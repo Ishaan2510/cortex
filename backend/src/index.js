@@ -19,6 +19,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const { sweepStuckTasks } = require('./services/taskProcessor');
 const authRoutes = require('./routes/auth');
@@ -49,10 +50,15 @@ app.use(
       }
       return callback(new Error('Not allowed by CORS'));
     },
+    // Required so the browser sends the httpOnly session cookie on cross-origin
+    // requests (Vercel frontend -> Render backend). Without this the SSE
+    // endpoint will see no cookie and return 401.
+    credentials: true,
   })
 );
 
 app.use(express.json());
+app.use(cookieParser());
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
