@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -16,14 +17,6 @@ const signToken = (userId) =>
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 
-/**
- * Cookie config for the session cookie used by the SSE endpoint.
- * - httpOnly: not visible to JavaScript, so XSS cannot steal it
- * - secure: HTTPS only in production
- * - sameSite=None in production because Vercel (frontend) and Render
- *   (backend) are different origins, and SameSite=None requires Secure
- * - maxAge: 7 days to match the JWT default expiry
- */
 const cookieOptions = () => {
   const isProd = process.env.NODE_ENV === 'production';
   return {
@@ -75,6 +68,20 @@ router.post('/login', authLimiter, async (req, res) => {
 router.post('/logout', (req, res) => {
   res.clearCookie('cortex_session', { ...cookieOptions(), maxAge: undefined });
   res.json({ message: 'Logged out' });
+});
+
+/**
+ * Refresh the session cookie from a Bearer token.
+ *
+ * Existing users who logged in before cookie auth shipped have JWT in
+ * localStorage but no session cookie. The frontend calls this endpoint
+ * once on app mount; protect middleware validates the Bearer header and
+ * we re-issue the cookie. Idempotent — safe to call repeatedly.
+ */
+router.post('/refresh-cookie', protect, (req, res) => {
+  const token = signToken(req.user.id);
+  res.cookie('cortex_session', token, cookieOptions());
+  res.json({ message: 'Cookie refreshed' });
 });
 
 module.exports = router;

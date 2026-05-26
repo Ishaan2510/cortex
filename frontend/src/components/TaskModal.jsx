@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { getTask } from '../api/tasks';
+import { useEffect, useRef, useState } from 'react';
 
 const STATUS = {
-  pending: { label: 'Pending', color: 'var(--warning)' },
-  running: { label: 'Running', color: 'var(--info)' },
-  success: { label: 'Completed', color: 'var(--success)' },
-  failed:  { label: 'Failed', color: 'var(--error)' },
+  pending:   { label: 'Pending',   color: 'var(--warning)' },
+  running:   { label: 'Running',   color: 'var(--info)' },
+  streaming: { label: 'Streaming', color: 'var(--accent)' },
+  success:   { label: 'Completed', color: 'var(--success)' },
+  failed:    { label: 'Failed',    color: 'var(--error)' },
 };
 
 const PROVIDER_COLOR = {
@@ -22,6 +22,8 @@ const OP_LABEL = {
   generate_tweet_thread:'Tweet Thread', translate_hindi:'Translate to Hindi',
   custom:'Custom Prompt',
 };
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /* ── Minimal inline markdown → JSX ─────────────────── */
 function Prose({ text }) {
@@ -72,7 +74,6 @@ function Prose({ text }) {
   return <>{out}</>;
 }
 
-/* ── Copy button ─────────────────────────────────── */
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -90,11 +91,15 @@ function CopyBtn({ text }) {
   );
 }
 
-/* ── Section wrapper ─────────────────────────────── */
-function Section({ label, children }) {
+function Section({ label, children, accent }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-      <span style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</span>
+      <span style={{
+        fontSize:10, fontWeight:700, color: accent || 'var(--text-3)',
+        textTransform:'uppercase', letterSpacing:'0.08em',
+      }}>
+        {label}
+      </span>
       {children}
     </div>
   );
@@ -102,21 +107,127 @@ function Section({ label, children }) {
 
 /* ── Main component ──────────────────────────────── */
 export default function TaskModal({ task, onClose }) {
-  const [detail, setDetail] = useState(task);
+  // detail: the merged view of task state. Starts from the task prop, gets
+  // updated by snapshot/progress/complete events. Tokens land in
+  // `streamingResult` instead of `detail.result` so we can render them
+  // separately and switch sources cleanly at completion.
+  const [detail, setDetail]             = useState(task);
+  const [streamingResult, setStreaming] = useState('');
+  const [isStreaming, setIsStreaming]   = useState(false);
+  const [providerSwitchInfo, setSwitch] = useState(null);
+
+  // Buffer tokens between flushes so we don't call setState 70 times/sec.
+  // Groq emits ~70 chunks/sec; without this, each chunk would trigger a
+  // markdown re-parse of the entire accumulated result.
+  const tokenBufferRef = useRef('');
+  const flushTimerRef  = useRef(null);
+  const esRef          = useRef(null);
 
   useEffect(() => {
     if (!task) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setDetail(task);
-    if (task.status !== 'pending' && task.status !== 'running') return;
-    const iv = setInterval(async () => {
-      try {
-        const { data } = await getTask(task._id);
-        setDetail(data);
-        if (data.status === 'success' || data.status === 'failed') clearInterval(iv);
-      } catch { clearInterval(iv); }
-    }, 3000);
-    return () => clearInterval(iv);
+    setStreaming('');
+    setSwitch(null);
+    tokenBufferRef.current = '';
+
+    // For tasks already in a terminal state, snapshot will arrive and the
+    // backend will close the stream immediately. We still open the
+    // connection so the snapshot rehydrates `detail` (in case the task
+    // prop is stale from the list).
+    const url = `${API_BASE}/api/tasks/${task._id}/stream`;
+    const es = new EventSource(url, { withCredentials: true });
+    esRef.current = es;
+
+    const flushBuffer = () => {
+      if (tokenBufferRef.current) {
+        const buffered = tokenBufferRef.current;
+        tokenBufferRef.current = '';
+        setStreaming(prev => prev + buffered);
+      }
+      flushTimerRef.current = null;
+    };
+
+    const scheduleFlush = () => {
+      if (flushTimerRef.current) return;
+      flushTimerRef.current = setTimeout(flushBuffer, 33); // ~30fps
+    };
+
+    es.addEventListener('snapshot', (e) => {
+      const data = JSON.parse(e.data);
+      setDetail(prev => ({ ...prev, ...data }));
+      // If the task was already complete before we opened the stream, the
+      // snapshot carries the final result. Show it via detail.result
+      // (non-streaming code path) — don't seed streamingResult.
+    });
+
+    es.addEventListener('progress', (e) => {
+      const data = JSON.parse(e.data);
+      setDetail(prev => ({ ...prev, ...data }));
+    });
+
+    es.addEventListener('token', (e) => {
+      const data = JSON.parse(e.data);
+      setIsStreaming(true);
+      // First token: clear any leftover provider_switch banner.
+      setSwitch(null);
+      tokenBufferRef.current += data.text;
+      scheduleFlush();
+    });
+
+    es.addEventListener('provider_switch', (e) => {
+      const data = JSON.parse(e.data);
+      // Flush any pending tokens from the failed provider so the UI clears
+      // cleanly before the new provider's tokens land.
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      tokenBufferRef.current = '';
+      setStreaming('');
+      setSwitch(data);
+    });
+
+    es.addEventListener('complete', (e) => {
+      const data = JSON.parse(e.data);
+      // Flush any in-flight tokens before swapping to the final result.
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (tokenBufferRef.current) {
+        tokenBufferRef.current = '';
+      }
+      setDetail(prev => ({ ...prev, ...data }));
+      setIsStreaming(false);
+      setStreaming(''); // result is now authoritative on detail
+      es.close();
+    });
+
+    es.addEventListener('error', (e) => {
+      // Two distinct error sources here:
+      //   1. Server-emitted 'error' event (task failed) — has data
+      //   2. Network/transport error from EventSource itself — no data,
+      //      readyState becomes CLOSED. We don't reconnect; the task is
+      //      either done or the user can refresh.
+      if (e.data) {
+        try {
+          const data = JSON.parse(e.data);
+          setDetail(prev => ({ ...prev, ...data }));
+        } catch { /* malformed payload */ }
+      }
+      setIsStreaming(false);
+      es.close();
+    });
+
+    es.addEventListener('end', () => {
+      es.close();
+    });
+
+    return () => {
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+      es.close();
+    };
   }, [task]);
 
   useEffect(() => {
@@ -127,9 +238,16 @@ export default function TaskModal({ task, onClose }) {
 
   if (!task || !detail) return null;
 
-  const s = STATUS[detail.status] || STATUS.pending;
-  const isWaiting = detail.status === 'pending' || detail.status === 'running';
+  // Status display: streaming gets its own state so the user sees the
+  // distinction between "queued/running with no tokens yet" and "tokens
+  // are flowing now."
+  const effectiveStatus = isStreaming ? 'streaming' : detail.status;
+  const s = STATUS[effectiveStatus] || STATUS.pending;
+  const isWaiting = detail.status === 'pending' || (detail.status === 'running' && !isStreaming);
   const opLabel = OP_LABEL[detail.operation] || detail.operation;
+
+  // The text to display: live tokens during streaming, final result after.
+  const displayText = isStreaming ? streamingResult : detail.result;
 
   return (
     <div
@@ -156,7 +274,9 @@ export default function TaskModal({ task, onClose }) {
                   </span>
                 )}
                 <span style={{ fontSize:12, fontWeight:600, color:s.color, display:'flex', alignItems:'center', gap:5 }}>
-                  {isWaiting && <span className="cx-blink" style={{ display:'inline-block', width:5, height:5, borderRadius:'50%', background:s.color }} />}
+                  {(isWaiting || isStreaming) && (
+                    <span className="cx-blink" style={{ display:'inline-block', width:5, height:5, borderRadius:'50%', background:s.color }} />
+                  )}
                   {s.label}
                 </span>
               </div>
@@ -204,6 +324,26 @@ export default function TaskModal({ task, onClose }) {
             </Section>
           )}
 
+          {/* Provider switch banner */}
+          {providerSwitchInfo && (
+            <div style={{
+              display:'flex', alignItems:'center', gap:9,
+              background:'var(--warning-soft)',
+              border:'1px solid var(--warning-ring)',
+              borderRadius:9, padding:'9px 12px',
+              fontSize:13, color:'var(--warning)',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              <span>
+                <strong style={{ fontWeight:600 }}>{PROVIDER_LABEL[providerSwitchInfo.from] || providerSwitchInfo.from}</strong>
+                {' failed mid-stream — retrying with '}
+                <strong style={{ fontWeight:600 }}>{PROVIDER_LABEL[providerSwitchInfo.to] || providerSwitchInfo.to}</strong>
+              </span>
+            </div>
+          )}
+
           {/* Input text */}
           {detail.inputText && (
             <Section label="Input">
@@ -219,7 +359,7 @@ export default function TaskModal({ task, onClose }) {
             </Section>
           )}
 
-          {/* Waiting */}
+          {/* Waiting (queued or running with no tokens yet) */}
           {isWaiting && (
             <div style={{
               display:'flex', flexDirection:'column', alignItems:'center', gap:12,
@@ -236,22 +376,35 @@ export default function TaskModal({ task, onClose }) {
                 ))}
               </div>
               <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>
-                {detail.status === 'pending' ? 'Queued — waiting for worker' : 'AI is processing…'}
+                {detail.status === 'pending' ? 'Queued — connecting' : 'Preparing request…'}
               </p>
             </div>
           )}
 
-          {/* Result */}
-          {detail.result && (
-            <Section label="Result">
+          {/* Result — streaming OR final */}
+          {displayText && (
+            <Section
+              label={isStreaming ? 'Streaming · live' : 'Result'}
+              accent={isStreaming ? 'var(--accent)' : undefined}
+            >
               <div style={{
                 background:'var(--surface-2)',
-                border:'1px solid rgba(74,222,128,0.15)',
+                border: isStreaming
+                  ? '1px solid rgba(124,92,246,0.25)'
+                  : '1px solid rgba(74,222,128,0.15)',
                 borderRadius:10, padding:'14px 15px',
+                position:'relative',
               }}>
-                <Prose text={detail.result} />
+                <Prose text={displayText} />
+                {isStreaming && (
+                  <span className="cx-blink" style={{
+                    display:'inline-block', width:7, height:14,
+                    background:'var(--accent)', marginLeft:2,
+                    verticalAlign:'-2px',
+                  }} />
+                )}
               </div>
-              <CopyBtn text={detail.result} />
+              {!isStreaming && displayText && <CopyBtn text={displayText} />}
             </Section>
           )}
 

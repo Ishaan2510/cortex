@@ -1,5 +1,5 @@
 const Task = require('../models/Task');
-const { routeAndCall } = require('./llmRouter');
+const { routeAndStream } = require('./llmRouter');
 const { getSystemPrompt, getOperationLabel } = require('./operations');
 const { extractPdfText, getImageData } = require('./fileProcessor');
 const eventBus = require('./eventBus');
@@ -54,31 +54,53 @@ async function processTask(taskId) {
     await Task.findByIdAndUpdate(taskId, { logs });
     eventBus.emit(taskId, 'progress', { logs });
 
-    const { result, attempted } = await routeAndCall({
-      systemPrompt, userMessage, operation, inputLength, hasImage, imageData,
-    });
+    // Stream tokens. We accumulate them locally for the final DB write, and
+    // forward each chunk to the event bus as it arrives so subscribed
+    // EventSource clients see live output.
+    //
+    // accumulatedResult is the source of truth for what the client sees. On
+    // a provider_switch we reset it because the new provider starts from
+    // scratch, and we want the DB write to match what the user saw.
+    let accumulatedResult = '';
+    let finalProvider = null;
+    let finalAttempted = [];
 
-    const providerUsed = attempted[attempted.length - 1];
-    logs.push(`${ts()} Completed using provider: ${providerUsed}`);
-    if (attempted.length > 1) {
-      logs.push(`${ts()} Fallback chain used: ${attempted.join(' -> ')}`);
+    for await (const event of routeAndStream({
+      systemPrompt, userMessage, operation, inputLength, hasImage, imageData,
+    })) {
+      if (event.type === 'token') {
+        accumulatedResult += event.text;
+        eventBus.emit(taskId, 'token', { text: event.text, provider: event.provider });
+      } else if (event.type === 'provider_switch') {
+        accumulatedResult = '';
+        logs.push(`${ts()} Provider ${event.from} failed mid-stream, switching to ${event.to}`);
+        eventBus.emit(taskId, 'provider_switch', { from: event.from, to: event.to });
+      } else if (event.type === 'complete') {
+        finalProvider = event.provider;
+        finalAttempted = event.attempted;
+      }
+    }
+
+    logs.push(`${ts()} Completed using provider: ${finalProvider}`);
+    if (finalAttempted.length > 1) {
+      logs.push(`${ts()} Fallback chain used: ${finalAttempted.join(' -> ')}`);
     }
 
     await Task.findByIdAndUpdate(taskId, {
       status: 'success',
-      result,
-      providerUsed,
-      providerChain: attempted,
+      result: accumulatedResult,
+      providerUsed: finalProvider,
+      providerChain: finalAttempted,
       logs,
     });
     eventBus.emit(taskId, 'complete', {
       status: 'success',
-      result,
-      providerUsed,
-      providerChain: attempted,
+      result: accumulatedResult,
+      providerUsed: finalProvider,
+      providerChain: finalAttempted,
       logs,
     });
-    console.log(`Task ${taskId} completed via ${providerUsed}`);
+    console.log(`Task ${taskId} completed via ${finalProvider}`);
   } catch (err) {
     logs.push(`${ts()} ERROR: ${err.message}`);
     await Task.findByIdAndUpdate(taskId, { status: 'failed', logs });
