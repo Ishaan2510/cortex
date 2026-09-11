@@ -27,6 +27,7 @@ const taskRoutes = require('./routes/tasks');
 
 const app = express();
 
+app.set('trust proxy', 1); // behind Render's proxy: correct client IP for rate limiting
 app.use(helmet());
 
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')

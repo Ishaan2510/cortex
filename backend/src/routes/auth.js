@@ -18,7 +18,7 @@ const signToken = (userId) =>
   });
 
 const cookieOptions = () => {
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER; // Render sets RENDER=true; cross-site cookie must be Secure+None there
   return {
     httpOnly: true,
     secure: isProd,
